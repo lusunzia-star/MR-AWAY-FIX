@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <meta
+    name="description"
+    content="MR AWAY FIX - Find trusted service providers or offer your services."
+  >
+
+  <meta
+    name="theme-color"
+    content="#111827"
+  >
+
+  <title>MR AWAY FIX | Local Services</title>
+
+  <link
+    rel="stylesheet"
+    href="style.css"
+  >
+
+</head>
+
+
+<body>
+
+  <!-- ==================================================
+       HEADER
+       ================================================== -->
+
+  <header>
+
+    <div class="brand">
+      MR AWAY FIX
+    </div>
+
+    <button
+      id="loginBtn"
+      class="outline"
+      type="button"
+      aria-label="Sign in or open account"
+    >
+      Sign in
+    </button>
+
+  </header>
+
+
+  <!-- ==================================================
+       AUTHENTICATION
+       ================================================== -->
+
+  <section
+    id="authBox"
+    class="card hidden"
+  >
+
+    <h2 id="authTitle">
+      Sign in
+    </h2>
+
+    <p>
+      Sign in to manage your service requests and jobs.
+    </p>
+
+    <input
+      id="authEmail"
+      type="email"
+      placeholder="Email address"
+      autocomplete="email"
+    >
+
+    <input
+      id="authPassword"
+      type="password"
+      placeholder="Password"
+      autocomplete="current-password"
+    >
+
+    <button
+      id="authSubmit"
+      type="button"
+    >
+      Sign in
+    </button>
+
+    <button
+      id="switchAuth"
+      type="button"
+      class="outline"
+    >
+      Create a new account
+    </button>
+
+    <button
+      id="closeAuth"
+      type="button"
+      class="outline"
+    >
+      Cancel
+    </button>
+
+    <p id="authStatus"></p>
+
+  </section>
+
+
+  <!-- ==================================================
+       MAIN
+       ================================================== -->
+
+  <main>
+
+
+    <!-- ==================================================
+         HERO
+         ================================================== -->
+
+    <section class="hero">
+
+      <p>
+        LOCAL SERVICES MADE SIMPLE
+      </p>
+
+      <h1>
+        Welcome to MR AWAY FIX
+      </h1>
+
+      <p>
+        Find trusted service providers or offer your
+        services in your local area.
+      </p>
+
+      <div class="hero-buttons">
+
+        <button
+          id="customerBtn"
+          type="button"
+        >
+          I need a service
+        </button>
+
+        <button
+          id="providerBtn"
+          type="button"
+          class="outline"
+        >
+          I offer a service
+        </button>
+
+      </div>
+
+    </section>
+
+
+    <!-- ==================================================
+         CUSTOMER SERVICES
+         ================================================== -->
+
+    <section
+      id="services"
+      class="card hidden"
+    >
+
+      <h2>
+        Choose a Service
+      </h2>
+
+      <p>
+        What service do you need?
+      </p>
+
+      <div class="service-grid">
+
+        <button
+          type="button"
+          data-service="Plumbing"
+        >
+          🔧 Plumbing
+        </button>
+
+        <button
+          type="button"
+          data-service="Electrical"
+        >
+          ⚡ Electrical
+        </button>
+
+        <button
+          type="button"
+          data-service="Painting"
+        >
+          🎨 Painting
+        </button>
+
+        <button
+          type="button"
+          data-service="Cleaning"
+        >
+          🧹 Cleaning
+        </button>
+
+        <button
+          type="button"
+          data-service="Gardening"
+        >
+          🌱 Gardening
+        </button>
+
+        <button
+          type="button"
+          data-service="Other"
+        >
+          🛠️ Other
+        </button>
+
+      </div>
+
+    </section>
+
+
+    <!-- ==================================================
+         CUSTOMER REQUEST
+         ================================================== -->
+
+    <section
+      id="requestBox"
+      class="card hidden"
+    >
+
+      <h2>
+        Request a Service
+      </h2>
+
+      <div class="card">
+
+        <p>
+          <strong>
+            Selected service:
+          </strong>
+
+          <span id="selectedService">
+            —
+          </span>
+        </p>
+
+      </div>
+
+      <label for="description">
+        Describe the job
+      </label>
+
+      <textarea
+        id="description"
+        placeholder="Tell the provider what needs to be done..."
+        rows="5"
+      ></textarea>
+
+      <label for="location">
+        Job location
+      </label>
+
+      <input
+        id="location"
+        type="text"
+        placeholder="Enter your area or location"
+      >
+
+      <button
+        id="submitRequest"
+        type="button"
+      >
+        Post Service Request
+      </button>
+
+      <p id="requestStatus"></p>
+
+
+      <!-- CUSTOMER RESPONSES -->
+
+      <div id="customerResponses">
+
+        <h3>
+          Provider Responses
+        </h3>
+
+      </div>
+
+    </section>
+
+
+    <!-- ==================================================
+         PROVIDER PROFILES
+         ================================================== -->
+
+    <section
+      id="providerProfiles"
+      class="card hidden"
+    >
+
+      <h2>
+        Provider Profiles
+      </h2>
+
+      <p>
+        Find service providers by name, service or area.
+      </p>
+
+      <div
+        id="providerProfilesList"
+      >
+
+        <p>
+          Loading providers...
+        </p>
+
+      </div>
+
+    </section>
+
+
+    <!-- ==================================================
+         NOTIFICATIONS
+         ================================================== -->
+
+    <section
+      id="notifications"
+      class="card hidden"
+    >
+
+      <h2>
+        Notifications
+      </h2>
+
+      <div
+        id="notificationsList"
+      >
+
+        <p>
+          No notifications yet.
+        </p>
+
+      </div>
+
+    </section>
+
+
+    <!-- ==================================================
+         PROVIDER REGISTRATION
+         ================================================== -->
+
+    <section
+      id="provider"
+      class="card hidden"
+    >
+
+      <h2>
+        Provider Registration
+      </h2>
+
+      <p>
+        Register your service so customers can find you.
+      </p>
+
+      <label for="providerName">
+        Provider / Business Name
+      </label>
+
+      <input
+        id="providerName"
+        type="text"
+        placeholder="Business or provider name"
+        autocomplete="organization"
+      >
+
+      <label for="providerService">
+        Service You Provide
+      </label>
+
+      <input
+        id="providerService"
+        type="text"
+        placeholder="Example: Plumbing"
+      >
+
+      <label for="providerArea">
+        Service Area
+      </label>
+
+      <input
+        id="providerArea"
+        type="text"
+        placeholder="Example: Krugersdorp"
+      >
+
+      <button
+        id="saveProvider"
+        type="button"
+      >
+        Register Provider
+      </button>
+
+      <p id="providerStatus"></p>
+
+
+      <!-- PROVIDER REVIEWS -->
+
+      <div id="providerReviews">
+
+        <h3>
+          Customer Reviews
+        </h3>
+
+      </div>
+
+    </section>
+
+
+    <!-- ==================================================
+         PROVIDER JOBS
+         ================================================== -->
+
+    <section
+      id="providerJobs"
+      class="card hidden"
+    >
+
+      <div id="jobsList">
+
+        <h2>
+          Provider Jobs
+        </h2>
+
+        <p>
+          Loading jobs...
+        </p>
+
+      </div>
+
+    </section>
+
+
+    <!-- ==================================================
+         JOB HISTORY
+         ================================================== -->
+
+    <section
+      id="jobHistory"
+      class="card hidden"
+    >
+
+      <h2>
+        Job History
+      </h2>
+
+      <div id="historyList">
+
+        <p>
+          No completed jobs yet.
+        </p>
+
+      </div>
+
+    </section>
+
+
+    <!-- ==================================================
+         HOW IT WORKS
+         ================================================== -->
+
+    <section class="card">
+
+      <h2>
+        How It Works
+      </h2>
+
+      <ol>
+
+        <li>
+          Create an account or sign in.
+        </li>
+
+        <li>
+          Choose whether you need a service
+          or offer a service.
+        </li>
+
+        <li>
+          Customers post service requests.
+        </li>
+
+        <li>
+          Providers request available jobs.
+        </li>
+
+        <li>
+          Customers choose a provider.
+        </li>
+
+        <li>
+          Providers start and complete the job.
+        </li>
+
+        <li>
+          Customers rate and review completed jobs.
+        </li>
+
+      </ol>
+
+    </section>
+
+
+    <!-- ==================================================
+         TRUST / SERVICE MESSAGE
+         ================================================== -->
+
+    <section class="card">
+
+      <h2>
+        MR AWAY FIX
+      </h2>
+
+      <p>
+        Connecting customers with local service providers
+        for everyday jobs.
+      </p>
+
+      <p>
+        Post a job, receive provider responses,
+        choose your provider and track the job through
+        completion.
+      </p>
+
+    </section>
+
+
+  </main>
+
+
+  <!-- ==================================================
+       FOOTER
+       ================================================== -->
+
+  <footer>
+
+    <p>
+      © 2026 MR AWAY FIX
+    </p>
+
+    <p>
+      Local services. Simple connections.
+    </p>
+
+  </footer>
+
+
+  <!-- ==================================================
+       APP JAVASCRIPT
+       ================================================== -->
+
+  <script
+    type="module"
+    src="app.js?v=13"
+    onload="console.log('MR AWAY FIX APP.JS LOADED v13')"
+    onerror="alert('APP.JS FILE NOT FOUND OR MODULE ERROR')"
+  ></script>
+
+</body>
+
+</html>

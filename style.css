@@ -1,0 +1,528 @@
+/* ======================================================
+   MR AWAY FIX — FINAL STYLE
+   ====================================================== */
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f5f7fb;
+  color: #18202a;
+  line-height: 1.5;
+}
+
+
+/* ======================================================
+   HEADER
+   ====================================================== */
+
+header,
+.topbar {
+  min-height: 64px;
+  background: #111827;
+  color: white;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 12px 20px;
+
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.brand {
+  font-weight: 800;
+  font-size: 18px;
+  letter-spacing: 1px;
+}
+
+
+/* ======================================================
+   MAIN
+   ====================================================== */
+
+main {
+  width: 100%;
+  overflow: hidden;
+}
+
+
+/* ======================================================
+   HERO
+   ====================================================== */
+
+.hero {
+  max-width: 900px;
+  margin: auto;
+
+  padding: 75px 20px 55px;
+
+  text-align: center;
+}
+
+.hero > p:first-child,
+.tag {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.hero h1 {
+  font-size: 46px;
+  line-height: 1.08;
+  margin: 14px 0;
+  font-weight: 800;
+}
+
+.hero p {
+  font-size: 19px;
+  line-height: 1.6;
+  margin: 12px auto;
+  max-width: 700px;
+}
+
+
+/* ======================================================
+   HERO BUTTONS
+   ====================================================== */
+
+.hero-buttons,
+.actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+
+  margin-top: 28px;
+}
+
+
+/* ======================================================
+   BUTTONS
+   ====================================================== */
+
+button {
+  border: 0;
+  border-radius: 12px;
+
+  padding: 14px 20px;
+
+  font-size: 15px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.15s ease,
+    opacity 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+button:hover {
+  transform: translateY(-1px);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.primary {
+  background: #111827;
+  color: white;
+}
+
+.secondary,
+.outline {
+  background: white;
+  color: #111827;
+  border: 1px solid #cbd5e1;
+}
+
+
+/* ======================================================
+   CARDS
+   ====================================================== */
+
+.card {
+  width: calc(100% - 32px);
+  max-width: 900px;
+
+  margin: 18px auto;
+  padding: 26px;
+
+  background: white;
+
+  border-radius: 18px;
+
+  box-shadow:
+    0 5px 22px rgba(0, 0, 0, 0.06);
+}
+
+.card h2 {
+  margin-top: 0;
+  font-size: 30px;
+}
+
+.card h3 {
+  margin-top: 22px;
+}
+
+
+/* ======================================================
+   SERVICE GRID
+   ====================================================== */
+
+.service-grid,
+.grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(auto-fit, minmax(140px, 1fr));
+
+  gap: 12px;
+
+  margin-top: 20px;
+}
+
+.service-grid button,
+.grid button {
+  background: #eef2f7;
+  color: #111827;
+
+  min-height: 58px;
+
+  text-align: center;
+}
+
+.service-grid button:hover,
+.grid button:hover {
+  background: #e2e8f0;
+}
+
+
+/* ======================================================
+   REQUEST FORM
+   ====================================================== */
+
+.request {
+  margin-top: 20px;
+}
+
+label {
+  display: block;
+
+  margin-top: 14px;
+  margin-bottom: 5px;
+
+  font-weight: 700;
+  font-size: 14px;
+}
+
+input,
+textarea,
+select {
+  width: 100%;
+
+  padding: 14px;
+
+  margin: 7px 0;
+
+  border: 1px solid #cbd5e1;
+
+  border-radius: 10px;
+
+  background: white;
+
+  color: #18202a;
+
+  font: inherit;
+
+  outline: none;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: #64748b;
+
+  box-shadow:
+    0 0 0 3px rgba(100, 116, 139, 0.12);
+}
+
+textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+
+
+/* ======================================================
+   PROVIDER PROFILES
+   ====================================================== */
+
+.provider-card {
+  margin-top: 15px;
+}
+
+.provider-card h3,
+.provider-card h4 {
+  margin-top: 0;
+}
+
+.provider-rating {
+  margin: 14px 0;
+  font-size: 15px;
+}
+
+.provider-details {
+  margin-top: 15px;
+}
+
+.provider-details hr {
+  border: 0;
+  border-top: 1px solid #e2e8f0;
+  margin: 18px 0;
+}
+
+
+/* ======================================================
+   PROVIDER SEARCH CONTROLS
+   ====================================================== */
+
+#providerSearchControls {
+  margin-bottom: 18px;
+}
+
+#providerSearchControls input,
+#providerSearchControls select,
+#providerSearchControls button {
+  margin-top: 8px;
+}
+
+
+/* ======================================================
+   RATING BUTTONS
+   ====================================================== */
+
+.rating-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  margin: 12px 0;
+}
+
+.rating-star-btn {
+  min-width: 65px;
+}
+
+.rating-star-btn.selected {
+  background: #111827;
+  color: white;
+  border-color: #111827;
+}
+
+
+/* ======================================================
+   STATUS / NOTIFICATIONS
+   ====================================================== */
+
+#authStatus,
+#requestStatus,
+#providerStatus,
+.review-status {
+  min-height: 22px;
+  margin-top: 12px;
+  font-weight: 600;
+}
+
+#notificationsList .card {
+  width: 100%;
+  margin: 10px 0;
+}
+
+
+/* ======================================================
+   JOB HISTORY
+   ====================================================== */
+
+#historyList .card,
+#jobsList .card {
+  width: 100%;
+  margin: 14px 0;
+}
+
+
+/* ======================================================
+   HOW IT WORKS
+   ====================================================== */
+
+.steps {
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, 1fr);
+
+  gap: 12px;
+}
+
+.steps div {
+  background: #f1f5f9;
+
+  padding: 18px;
+
+  border-radius: 12px;
+}
+
+.steps b {
+  display: block;
+
+  font-size: 24px;
+
+  margin-bottom: 8px;
+}
+
+
+/* ======================================================
+   LISTS
+   ====================================================== */
+
+ol {
+  padding-left: 25px;
+}
+
+li {
+  margin-bottom: 10px;
+}
+
+
+/* ======================================================
+   HIDDEN
+   ====================================================== */
+
+.hidden {
+  display: none !important;
+}
+
+
+/* ======================================================
+   FOOTER
+   ====================================================== */
+
+footer {
+  text-align: center;
+
+  padding: 35px 20px;
+
+  color: #64748b;
+
+  font-size: 13px;
+}
+
+
+/* ======================================================
+   MOBILE
+   ====================================================== */
+
+@media (max-width: 600px) {
+
+  header,
+  .topbar {
+    padding: 12px 15px;
+  }
+
+  .brand {
+    font-size: 16px;
+  }
+
+  .hero {
+    padding: 60px 18px 40px;
+  }
+
+  .hero h1 {
+    font-size: 34px;
+  }
+
+  .hero p {
+    font-size: 17px;
+  }
+
+  .hero-buttons {
+    flex-direction: column;
+  }
+
+  .hero-buttons button {
+    width: 100%;
+  }
+
+  .card {
+    width: calc(100% - 20px);
+    padding: 20px;
+    border-radius: 16px;
+  }
+
+  .card h2 {
+    font-size: 27px;
+  }
+
+  .service-grid,
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .service-grid button,
+  .grid button {
+    min-height: 58px;
+    padding: 10px 8px;
+    font-size: 14px;
+  }
+
+  .steps {
+    grid-template-columns: 1fr;
+  }
+
+  .rating-buttons {
+    gap: 6px;
+  }
+
+  .rating-star-btn {
+    flex: 1;
+    min-width: 55px;
+  }
+
+}
+
+
+/* ======================================================
+   VERY SMALL PHONES
+   ====================================================== */
+
+@media (max-width: 380px) {
+
+  .hero h1 {
+    font-size: 30px;
+  }
+
+  .service-grid,
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+}
