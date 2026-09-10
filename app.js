@@ -2,7 +2,7 @@ import { supabase } from './supabaseClient.js';
 
 
 // ======================================================
-// MR AWAY FIX — MAIN ELEMENTS
+// MR AWAY FIX � MAIN ELEMENTS
 // ======================================================
 
 const services = document.getElementById("services");
@@ -65,6 +65,9 @@ const authStatus = document.getElementById("authStatus");
 
 const submitRequest =
   document.getElementById("submitRequest");
+
+const jobAmount =
+  document.getElementById("jobAmount");
 
 
 // ======================================================
@@ -201,8 +204,8 @@ function stars(rating) {
     );
 
   return (
-    "★".repeat(number) +
-    "☆".repeat(5 - number)
+    "".repeat(number) +
+    "".repeat(5 - number)
   );
 }
 
@@ -331,7 +334,7 @@ function phoneButtons(phone) {
           font-weight:700;
         "
       >
-        📞 Call Provider
+         Call Provider
       </a>
 
       <a
@@ -348,7 +351,7 @@ function phoneButtons(phone) {
           font-weight:700;
         "
       >
-        💬 WhatsApp
+         WhatsApp
       </a>
 
     </div>
@@ -721,7 +724,7 @@ async function loadNotifications() {
     uniqueItems.map(item => `
       <div class="card">
         <p>
-          🔔 ${escapeHtml(item)}
+           ${escapeHtml(item)}
         </p>
       </div>
     `).join("");
@@ -1145,7 +1148,7 @@ async function renderProviderResults(
     ) {
 
       ratingBox.innerHTML =
-        `⭐ No reviews yet`;
+        ` No reviews yet`;
 
       continue;
     }
@@ -1881,6 +1884,9 @@ submitRequest?.addEventListener(
         "location"
       )?.value.trim();
 
+    const amount =
+      jobAmount?.value.trim();
+
     const service =
       selectedService ||
       requestBox?.dataset.service;
@@ -1898,11 +1904,29 @@ submitRequest?.addEventListener(
 
     if (
       !description ||
-      !location
+      !location ||
+      !amount
     ) {
 
       alert(
-        "Please enter the job description and location."
+        "Please enter the job description, location and job amount."
+      );
+
+      return;
+    }
+
+
+    const amountNumber =
+      Number(amount);
+
+
+    if (
+      !Number.isFinite(amountNumber) ||
+      amountNumber < 0
+    ) {
+
+      alert(
+        "Please enter a valid job amount."
       );
 
       return;
@@ -1954,6 +1978,7 @@ submitRequest?.addEventListener(
         service_type: service,
         description,
         location,
+        job_amount: amountNumber,
         status: "posted",
         is_active: true
       })
@@ -2018,6 +2043,10 @@ submitRequest?.addEventListener(
 
     if (locationInput) {
       locationInput.value = "";
+    }
+
+    if (jobAmount) {
+      jobAmount.value = "";
     }
 
 
@@ -2142,6 +2171,16 @@ async function loadCustomerHistory() {
           ${escapeHtml(
             job.location
           )}
+        </p>
+
+        <p>
+          <strong>
+            Job Amount:
+          </strong>
+
+          R${Number(
+            job.job_amount || 0
+          ).toFixed(2)}
         </p>
 
         <p>
@@ -2292,7 +2331,7 @@ async function loadCustomerRating(
           class="rating-star-btn outline"
           data-rating="${number}"
         >
-          ${number} ★
+          ${number} 
         </button>
       `).join("")}
 
@@ -2986,6 +3025,16 @@ async function loadJobs() {
           )}
         </p>
 
+        <p>
+          <strong>
+            Job Amount:
+          </strong>
+
+          R${Number(
+            job.job_amount || 0
+          ).toFixed(2)}
+        </p>
+
         <button
           type="button"
           class="want-job-btn"
@@ -3168,6 +3217,16 @@ async function loadJobs() {
           ${escapeHtml(
             job.location
           )}
+        </p>
+
+        <p>
+          <strong>
+            Job Amount:
+          </strong>
+
+          R${Number(
+            job.job_amount || 0
+          ).toFixed(2)}
         </p>
 
         <p>
@@ -4025,11 +4084,3 @@ async function initializeApp() {
 
 
 initializeApp();
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./service-worker.js")
-      .catch(error => {
-        console.error("Service Worker registration failed:", error);
-      });
-  });
-}
