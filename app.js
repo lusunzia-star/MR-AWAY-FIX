@@ -102,7 +102,68 @@ let localProvidersLoading = false;
 let providerSearchText = "";
 let providerServiceFilter = "";
 let providerAreaFilter = "";
+// ======================================================
+// DEMO PAYMENT STATUS
+// ======================================================
 
+const DEMO_PAYMENT_KEY =
+  "mrAwayFixDemoPayments";
+
+
+function getDemoPayments() {
+
+  try {
+
+    return JSON.parse(
+      localStorage.getItem(
+        DEMO_PAYMENT_KEY
+      ) || "{}"
+    );
+
+  } catch {
+
+    return {};
+
+  }
+}
+
+
+function getDemoPaymentStatus(requestId) {
+
+  if (!requestId) {
+    return "payment_pending";
+  }
+
+  const payments =
+    getDemoPayments();
+
+  return (
+    payments[String(requestId)] ||
+    "payment_pending"
+  );
+}
+
+
+function setDemoPaymentStatus(
+  requestId,
+  status
+) {
+
+  if (!requestId) {
+    return;
+  }
+
+  const payments =
+    getDemoPayments();
+
+  payments[String(requestId)] =
+    status;
+
+  localStorage.setItem(
+    DEMO_PAYMENT_KEY,
+    JSON.stringify(payments)
+  );
+}
 
 // ======================================================
 // CUSTOMER REQUEST LOCAL STORAGE
