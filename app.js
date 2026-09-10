@@ -1362,6 +1362,51 @@ providerBtn?.addEventListener(
 
 
 // ======================================================
+// REFRESH PROVIDER JOBS WHEN DETAILS CHANGE
+// ======================================================
+
+let providerJobsRefreshTimer = null;
+
+
+function refreshProviderJobs() {
+
+  clearTimeout(
+    providerJobsRefreshTimer
+  );
+
+  providerJobsRefreshTimer =
+    setTimeout(
+      async () => {
+
+        await loadJobs();
+        await loadProviderReviews();
+        await loadNotifications();
+
+      },
+      400
+    );
+}
+
+
+providerName?.addEventListener(
+  "input",
+  refreshProviderJobs
+);
+
+
+providerService?.addEventListener(
+  "input",
+  refreshProviderJobs
+);
+
+
+providerArea?.addEventListener(
+  "input",
+  refreshProviderJobs
+);
+
+
+// ======================================================
 // SERVICE BUTTONS
 // ======================================================
 
