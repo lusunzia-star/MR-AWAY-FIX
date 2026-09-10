@@ -3499,24 +3499,65 @@ async function loadJobs() {
     }
 
 
-    if (completed) {
+   if (completed) {
 
-      jobActions = `
-        <p>
-          <strong>
-            Completed
-          </strong>
-        </p>
+  const paymentStatus =
+    getDemoPaymentStatus(job.id);
 
-        <div
-          id="job-review-${escapeHtml(
-            job.id
-          )}"
-        >
-          Loading customer review...
-        </div>
-      `;
-    }
+  jobActions = `
+    <p>
+      <strong>
+        Completed
+      </strong>
+    </p>
+
+    <div class="card">
+
+      <p>
+        <strong>
+          Payment Status:
+        </strong>
+
+        ${
+          paymentStatus === "paid"
+            ? "Paid (Demo)"
+            : "Payment Pending"
+        }
+      </p>
+
+      ${
+        paymentStatus !== "paid"
+          ? `
+            <button
+              type="button"
+              class="demo-paid-btn"
+              data-request-id="${escapeHtml(
+                job.id
+              )}"
+            >
+              Mark as Paid (Demo)
+            </button>
+          `
+          : `
+            <p>
+              <strong>
+                 Payment completed (Demo)
+              </strong>
+            </p>
+          `
+      }
+
+    </div>
+
+    <div
+      id="job-review-${escapeHtml(
+        job.id
+      )}"
+    >
+      Loading customer review...
+    </div>
+  `;
+}
 
 
     html += `
@@ -3587,7 +3628,42 @@ async function loadJobs() {
 
   jobsList.innerHTML =
     html;
+// ====================================================
+// DEMO PAYMENT — MARK AS PAID
+// ====================================================
 
+document
+  .querySelectorAll(
+    ".demo-paid-btn"
+  )
+  .forEach(button => {
+
+    button.addEventListener(
+      "click",
+      async () => {
+
+        const requestId =
+          button.dataset.requestId;
+
+        if (!requestId) {
+          return;
+        }
+
+        button.disabled = true;
+
+        setDemoPaymentStatus(
+          requestId,
+          "paid"
+        );
+
+        await loadJobs();
+        await loadProviderReviews();
+        await loadNotifications();
+
+      }
+    );
+
+  });
 
   // ====================================================
   // WANT THIS JOB
