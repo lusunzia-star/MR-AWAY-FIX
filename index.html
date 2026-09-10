@@ -26,7 +26,7 @@
     rel="stylesheet"
     href="style.css"
   >
-<link rel="manifest" href="manifest.json">
+
 </head>
 
 
@@ -272,6 +272,19 @@
         id="location"
         type="text"
         placeholder="Enter your area or location"
+      >
+
+      <label for="jobAmount">
+        Job Amount (R)
+      </label>
+
+      <input
+        id="jobAmount"
+        type="number"
+        min="0"
+        step="0.01"
+        placeholder="Enter job amount"
+        inputmode="decimal"
       >
 
       <button
