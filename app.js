@@ -1474,11 +1474,14 @@ async function loadCustomerResponses() {
       "customerResponses"
     );
 
-
   if (!responsesBox) {
     return;
   }
 
+
+  // ====================================================
+  // GET CURRENT USER
+  // ====================================================
 
   const {
     data: {
@@ -1490,256 +1493,406 @@ async function loadCustomerResponses() {
   if (!user) {
 
     responsesBox.innerHTML = `
-      <p>
-        Please sign in to see your service responses.
-      </p>
+      <div class="card">
+        <p>
+          Please sign in to see your service requests.
+        </p>
+      </div>
     `;
 
     return;
   }
 
 
-  let requestId =
-    requestBox?.dataset.requestId;
-
-  let request = null;
-
-
-  if (requestId) {
-
-    const {
-      data
-    } = await supabase
-      .from("service_requests")
-      .select("*")
-      .eq(
-        "id",
-        requestId
-      )
-      .eq(
-        "customer_id",
-        user.id
-      )
-      .maybeSingle();
-
-    request = data;
-  }
-
-
-  if (
-    !request &&
-    requestBox?.dataset.service
-  ) {
-
-    const {
-      data
-    } = await supabase
-      .from("service_requests")
-      .select("*")
-      .eq(
-        "customer_id",
-        user.id
-      )
-      .eq(
-        "service_type",
-        requestBox.dataset.service
-      )
-      .order("id", {
-        ascending: false
-      })
-      .limit(1)
-      .maybeSingle();
-
-    request = data;
-
-
-    if (
-      request &&
-      requestBox
-    ) {
-
-      requestBox.dataset.requestId =
-        request.id;
-    }
-  }
-
-
-  if (!request) {
-
-    responsesBox.innerHTML = `
-      <p>
-        No service request found yet.
-      </p>
-    `;
-
-    return;
-  }
-
-
-  const statusText =
-    request.status ||
-    "posted";
-
+  // ====================================================
+  // LOAD ALL CUSTOMER JOBS
+  // ====================================================
 
   const {
-    data: responses,
-    error
+    data: jobs,
+    error: jobsError
   } = await supabase
-    .from("service_responses")
+    .from("service_requests")
     .select("*")
     .eq(
-      "request_id",
-      request.id
+      "customer_id",
+      user.id
     )
-    .order("id", {
-      ascending: false
-    });
+    .order(
+      "id",
+      {
+        ascending: false
+      }
+    );
 
 
-  if (error) {
+  if (jobsError) {
+
+    console.error(
+      "Customer jobs loading error:",
+      jobsError
+    );
 
     responsesBox.innerHTML = `
-      <p>
-        Unable to load provider responses.
-      </p>
+      <div class="card">
+        <p>
+          Unable to load your service requests.
+        </p>
+      </div>
     `;
-
-    console.error(error);
 
     return;
   }
 
 
+  // ====================================================
+  // NO JOBS
+  // ====================================================
+
+  if (
+    !jobs ||
+    !jobs.length
+  ) {
+
+    responsesBox.innerHTML = `
+      <div class="card">
+        <p>
+          You have not posted a service request yet.
+        </p>
+      </div>
+    `;
+
+    return;
+  }
+
+
+  // ====================================================
+  // BUILD CUSTOMER JOB DISPLAY
+  // ====================================================
+
   let html = `
-    <div class="card">
-
-      <p>
-        <strong>
-          Job status:
-        </strong>
-
-        ${escapeHtml(statusText)}
-      </p>
-
-    </div>
+    <h3>
+      Your Service Requests
+    </h3>
   `;
 
 
-  if (
-    !responses ||
-    !responses.length
+  for (
+    const job of jobs
   ) {
+
+    // --------------------------------------------------
+    // Load provider responses for this job
+    // --------------------------------------------------
+
+    const {
+      data: responses,
+      error: responsesError
+    } = await supabase
+      .from("service_responses")
+      .select("*")
+      .eq(
+        "request_id",
+        job.id
+      )
+      .order(
+        "id",
+        {
+          ascending: false
+        }
+      );
+
+
+    if (responsesError) {
+
+      console.error(
+        "Customer response loading error:",
+        responsesError
+      );
+    }
+
+
+    // --------------------------------------------------
+    // Job information
+    // --------------------------------------------------
+
+    const jobStatus =
+      job.status ||
+      "posted";
+
+
+    const amount =
+      Number(
+        job.job_amount || 0
+      );
+
+
+    // --------------------------------------------------
+    // Active / current job heading
+    // --------------------------------------------------
 
     html += `
       <div class="card">
 
+        <h3>
+          ${escapeHtml(
+            job.service_type ||
+            "Service"
+          )}
+        </h3>
+
         <p>
-          Waiting for providers to respond.
+          <strong>
+            Description:
+          </strong>
+
+          ${escapeHtml(
+            job.description ||
+            ""
+          )}
         </p>
 
-      </div>
+        <p>
+          <strong>
+            Location:
+          </strong>
+
+          ${escapeHtml(
+            job.location ||
+            ""
+          )}
+        </p>
+
+        <p>
+          <strong>
+            Job Amount:
+          </strong>
+
+          R${amount.toFixed(2)}
+        </p>
+
+        <p>
+          <strong>
+            Job status:
+          </strong>
+
+          ${escapeHtml(
+            jobStatus
+          )}
+        </p>
     `;
 
-    responsesBox.innerHTML =
-      html;
 
-    return;
-  }
-
-
-  for (
-    const response of responses
-  ) {
-
-    const providerText =
-      response.provider_name ||
-      "Provider";
-
-
-    let actionHtml = "";
-
+    // ==================================================
+    // NO PROVIDER RESPONSES YET
+    // ==================================================
 
     if (
-      response.status === "pending" &&
-      request.status === "posted"
+      !responses ||
+      !responses.length
     ) {
 
-      actionHtml = `
-        <button
-          type="button"
-          class="accept-provider-btn"
-          data-response-id="${escapeHtml(
-            response.id
-          )}"
-          data-request-id="${escapeHtml(
-            request.id
-          )}"
-        >
-          Accept Provider
-        </button>
+      if (
+        jobStatus === "posted" &&
+        job.is_active !== false
+      ) {
 
-        <button
-          type="button"
-          class="reject-provider-btn outline"
-          data-response-id="${escapeHtml(
-            response.id
-          )}"
-          data-request-id="${escapeHtml(
-            request.id
-          )}"
-        >
-          Reject
-        </button>
+        html += `
+          <div class="card">
+
+            <p>
+              <strong>
+                Waiting for providers to respond.
+              </strong>
+            </p>
+
+          </div>
+        `;
+      }
+
+      else if (
+        jobStatus === "completed"
+      ) {
+
+        html += `
+          <div class="card">
+
+            <p>
+              <strong>
+                This job has been completed.
+              </strong>
+            </p>
+
+          </div>
+        `;
+      }
+
+      html += `
+        </div>
       `;
+
+      continue;
     }
 
+
+    // ==================================================
+    // PROVIDER RESPONSES
+    // ==================================================
 
     html += `
       <div class="card">
 
         <h4>
-          ${escapeHtml(providerText)}
+          Provider Responses
         </h4>
+    `;
 
-        <p>
-          Service:
-          ${escapeHtml(
-            response.provider_service ||
-            request.service_type ||
-            ""
-          )}
-        </p>
 
-        <p>
-          Provider area:
-          ${escapeHtml(
-            response.provider_location ||
-            ""
-          )}
-        </p>
+    for (
+      const response of responses
+    ) {
 
-        <p>
-          Status:
-          <strong>
+      const providerText =
+        response.provider_name ||
+        "Provider";
+
+
+      const providerServiceText =
+        response.provider_service ||
+        job.service_type ||
+        "";
+
+
+      const providerAreaText =
+        response.provider_location ||
+        "";
+
+
+      const responseStatus =
+        response.status ||
+        "pending";
+
+
+      // ----------------------------------------------
+      // ACTION BUTTONS
+      // ----------------------------------------------
+
+      let actionHtml = "";
+
+
+      if (
+        responseStatus === "pending" &&
+        jobStatus === "posted" &&
+        job.is_active !== false
+      ) {
+
+        actionHtml = `
+          <div>
+
+            <button
+              type="button"
+              class="accept-provider-btn"
+              data-response-id="${escapeHtml(
+                response.id
+              )}"
+              data-request-id="${escapeHtml(
+                job.id
+              )}"
+            >
+              Accept Provider
+            </button>
+
+            <button
+              type="button"
+              class="reject-provider-btn outline"
+              data-response-id="${escapeHtml(
+                response.id
+              )}"
+              data-request-id="${escapeHtml(
+                job.id
+              )}"
+            >
+              Reject
+            </button>
+
+          </div>
+        `;
+      }
+
+
+      // ----------------------------------------------
+      // PROVIDER CARD
+      // ----------------------------------------------
+
+      html += `
+        <div class="card">
+
+          <h4>
             ${escapeHtml(
-              response.status ||
-              "pending"
+              providerText
             )}
-          </strong>
-        </p>
+          </h4>
 
-        ${actionHtml}
+          <p>
+            <strong>
+              Service:
+            </strong>
 
+            ${escapeHtml(
+              providerServiceText
+            )}
+          </p>
+
+          <p>
+            <strong>
+              Provider area:
+            </strong>
+
+            ${escapeHtml(
+              providerAreaText
+            )}
+          </p>
+
+          <p>
+            <strong>
+              Response status:
+            </strong>
+
+            ${escapeHtml(
+              responseStatus
+            )}
+          </p>
+
+          ${actionHtml}
+
+        </div>
+      `;
+    }
+
+
+    html += `
+      </div>
+    `;
+
+
+    html += `
       </div>
     `;
   }
 
 
+  // ====================================================
+  // DISPLAY EVERYTHING
+  // ====================================================
+
   responsesBox.innerHTML =
     html;
 
 
-  // ACCEPT
+  // ====================================================
+  // ACCEPT PROVIDER
+  // ====================================================
+
   document
     .querySelectorAll(
       ".accept-provider-btn"
@@ -1756,8 +1909,13 @@ async function loadCustomerResponses() {
           const requestId =
             button.dataset.requestId;
 
+
           button.disabled = true;
 
+
+          // --------------------------------------------
+          // Make sure response exists
+          // --------------------------------------------
 
           const {
             data: selectedResponse,
@@ -1781,11 +1939,16 @@ async function loadCustomerResponses() {
               "Unable to find this provider response."
             );
 
-            button.disabled = false;
+            button.disabled =
+              false;
 
             return;
           }
 
+
+          // --------------------------------------------
+          // Accept selected provider
+          // --------------------------------------------
 
           const {
             error: acceptError
@@ -1803,6 +1966,7 @@ async function loadCustomerResponses() {
           if (acceptError) {
 
             console.error(
+              "Accept provider error:",
               acceptError
             );
 
@@ -1810,13 +1974,20 @@ async function loadCustomerResponses() {
               "Unable to accept provider."
             );
 
-            button.disabled = false;
+            button.disabled =
+              false;
 
             return;
           }
 
 
-          await supabase
+          // --------------------------------------------
+          // Reject other pending providers
+          // --------------------------------------------
+
+          const {
+            error: rejectOthersError
+          } = await supabase
             .from("service_responses")
             .update({
               status: "rejected"
@@ -1835,6 +2006,19 @@ async function loadCustomerResponses() {
             );
 
 
+          if (rejectOthersError) {
+
+            console.error(
+              "Other provider rejection error:",
+              rejectOthersError
+            );
+          }
+
+
+          // --------------------------------------------
+          // Accept the job
+          // --------------------------------------------
+
           const {
             error: jobAcceptError
           } = await supabase
@@ -1852,6 +2036,7 @@ async function loadCustomerResponses() {
           if (jobAcceptError) {
 
             console.error(
+              "Job accept error:",
               jobAcceptError
             );
 
@@ -1859,21 +2044,36 @@ async function loadCustomerResponses() {
               "Provider accepted, but the job status could not be updated."
             );
 
-            button.disabled = false;
+            button.disabled =
+              false;
 
             return;
           }
 
 
+          alert(
+            "Provider accepted successfully!"
+          );
+
+
+          // --------------------------------------------
+          // Refresh customer screen
+          // --------------------------------------------
+
           await loadCustomerResponses();
+
           await loadCustomerHistory();
+
           await loadNotifications();
         }
       );
     });
 
 
-  // REJECT
+  // ====================================================
+  // REJECT PROVIDER
+  // ====================================================
+
   document
     .querySelectorAll(
       ".reject-provider-btn"
@@ -1887,7 +2087,9 @@ async function loadCustomerResponses() {
           const responseId =
             button.dataset.responseId;
 
-          button.disabled = true;
+
+          button.disabled =
+            true;
 
 
           const {
@@ -1905,20 +2107,26 @@ async function loadCustomerResponses() {
 
           if (error) {
 
-            console.error(error);
+            console.error(
+              "Reject provider error:",
+              error
+            );
 
             alert(
               "Unable to reject provider."
             );
 
-            button.disabled = false;
+            button.disabled =
+              false;
 
             return;
           }
 
 
           await loadCustomerResponses();
+
           await loadCustomerHistory();
+
           await loadNotifications();
         }
       );
