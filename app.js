@@ -1424,6 +1424,21 @@ document
           button.dataset.service;
 
 
+        // UPDATE SELECTED SERVICE ON SCREEN
+
+        const selectedServiceBox =
+          document.getElementById(
+            "selectedService"
+          );
+
+
+        if (selectedServiceBox) {
+
+          selectedServiceBox.textContent =
+            selectedService;
+        }
+
+
         if (requestBox) {
 
           requestBox.dataset.service =
