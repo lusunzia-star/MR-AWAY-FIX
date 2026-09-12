@@ -2896,15 +2896,16 @@ saveProvider?.addEventListener(
 
 
     const {
-      error
-    } = await supabase
-      .from("service_providers")
-      .insert({
-        business_name: name,
-        service_type: service,
-        location: area,
-        phone: phone
-      });
+  error
+} = await supabase
+  .from("service_providers")
+  .insert({
+    user_id: user.id,
+    business_name: name,
+    service_type: service,
+    location: area,
+    phone: phone
+  });
 
 
     if (error) {
@@ -3747,22 +3748,25 @@ document
             error: responseError
           } = await supabase
             .from("service_responses")
-            .insert({
-              request_id:
-                requestId,
+           .insert({
+  request_id:
+    requestId,
 
-              provider_name:
-                name,
+  provider_user_id:
+    user.id,
 
-              provider_service:
-                service,
+  provider_name:
+    name,
 
-              provider_location:
-                area,
+  provider_service:
+    service,
 
-              status:
-                "pending"
-            });
+  provider_location:
+    area,
+
+  status:
+    "pending"
+});
 
 
           if (responseError) {
