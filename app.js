@@ -102,68 +102,7 @@ let localProvidersLoading = false;
 let providerSearchText = "";
 let providerServiceFilter = "";
 let providerAreaFilter = "";
-// ======================================================
-// DEMO PAYMENT STATUS
-// ======================================================
 
-const DEMO_PAYMENT_KEY =
-  "mrAwayFixDemoPayments";
-
-
-function getDemoPayments() {
-
-  try {
-
-    return JSON.parse(
-      localStorage.getItem(
-        DEMO_PAYMENT_KEY
-      ) || "{}"
-    );
-
-  } catch {
-
-    return {};
-
-  }
-}
-
-
-function getDemoPaymentStatus(requestId) {
-
-  if (!requestId) {
-    return "payment_pending";
-  }
-
-  const payments =
-    getDemoPayments();
-
-  return (
-    payments[String(requestId)] ||
-    "payment_pending"
-  );
-}
-
-
-function setDemoPaymentStatus(
-  requestId,
-  status
-) {
-
-  if (!requestId) {
-    return;
-  }
-
-  const payments =
-    getDemoPayments();
-
-  payments[String(requestId)] =
-    status;
-
-  localStorage.setItem(
-    DEMO_PAYMENT_KEY,
-    JSON.stringify(payments)
-  );
-}
 
 // ======================================================
 // CUSTOMER REQUEST LOCAL STORAGE
@@ -395,7 +334,7 @@ function phoneButtons(phone) {
           font-weight:700;
         "
       >
-         Call Provider
+        Call Provider
       </a>
 
       <a
@@ -412,7 +351,7 @@ function phoneButtons(phone) {
           font-weight:700;
         "
       >
-         WhatsApp
+        WhatsApp
       </a>
 
     </div>
@@ -566,6 +505,7 @@ async function loadNotifications() {
 
 
   // CUSTOMER NOTIFICATIONS
+
   const {
     data: customerJobs,
     error: customerJobsError
@@ -679,6 +619,7 @@ async function loadNotifications() {
 
 
   // PROVIDER NOTIFICATIONS
+
   const currentProviderName =
     providerName?.value?.trim();
 
@@ -785,7 +726,7 @@ async function loadNotifications() {
     uniqueItems.map(item => `
       <div class="card">
         <p>
-           ${escapeHtml(item)}
+          ${escapeHtml(item)}
         </p>
       </div>
     `).join("");
@@ -1209,7 +1150,7 @@ async function renderProviderResults(
     ) {
 
       ratingBox.innerHTML =
-        ` No reviews yet`;
+        `No reviews yet`;
 
       continue;
     }
@@ -1485,8 +1426,6 @@ document
           button.dataset.service;
 
 
-        // UPDATE SELECTED SERVICE ON SCREEN
-
         const selectedServiceBox =
           document.getElementById(
             "selectedService"
@@ -1540,10 +1479,6 @@ async function loadCustomerResponses() {
   }
 
 
-  // ====================================================
-  // GET CURRENT USER
-  // ====================================================
-
   const {
     data: {
       user
@@ -1564,10 +1499,6 @@ async function loadCustomerResponses() {
     return;
   }
 
-
-  // ====================================================
-  // LOAD ALL CUSTOMER JOBS
-  // ====================================================
 
   const {
     data: jobs,
@@ -1606,10 +1537,6 @@ async function loadCustomerResponses() {
   }
 
 
-  // ====================================================
-  // NO JOBS
-  // ====================================================
-
   if (
     !jobs ||
     !jobs.length
@@ -1627,10 +1554,6 @@ async function loadCustomerResponses() {
   }
 
 
-  // ====================================================
-  // BUILD CUSTOMER JOB DISPLAY
-  // ====================================================
-
   let html = `
     <h3>
       Your Service Requests
@@ -1641,10 +1564,6 @@ async function loadCustomerResponses() {
   for (
     const job of jobs
   ) {
-
-    // --------------------------------------------------
-    // Load provider responses for this job
-    // --------------------------------------------------
 
     const {
       data: responses,
@@ -1673,10 +1592,6 @@ async function loadCustomerResponses() {
     }
 
 
-    // --------------------------------------------------
-    // Job information
-    // --------------------------------------------------
-
     const jobStatus =
       job.status ||
       "posted";
@@ -1687,10 +1602,6 @@ async function loadCustomerResponses() {
         job.job_amount || 0
       );
 
-
-    // --------------------------------------------------
-    // Active / current job heading
-    // --------------------------------------------------
 
     html += `
       <div class="card">
@@ -1744,10 +1655,6 @@ async function loadCustomerResponses() {
     `;
 
 
-    // ==================================================
-    // NO PROVIDER RESPONSES YET
-    // ==================================================
-
     if (
       !responses ||
       !responses.length
@@ -1796,10 +1703,6 @@ async function loadCustomerResponses() {
     }
 
 
-    // ==================================================
-    // PROVIDER RESPONSES
-    // ==================================================
-
     html += `
       <div class="card">
 
@@ -1833,10 +1736,6 @@ async function loadCustomerResponses() {
         response.status ||
         "pending";
 
-
-      // ----------------------------------------------
-      // ACTION BUTTONS
-      // ----------------------------------------------
 
       let actionHtml = "";
 
@@ -1880,10 +1779,6 @@ async function loadCustomerResponses() {
         `;
       }
 
-
-      // ----------------------------------------------
-      // PROVIDER CARD
-      // ----------------------------------------------
 
       html += `
         <div class="card">
@@ -1942,10 +1837,6 @@ async function loadCustomerResponses() {
   }
 
 
-  // ====================================================
-  // DISPLAY EVERYTHING
-  // ====================================================
-
   responsesBox.innerHTML =
     html;
 
@@ -1973,10 +1864,6 @@ async function loadCustomerResponses() {
 
           button.disabled = true;
 
-
-          // --------------------------------------------
-          // Make sure response exists
-          // --------------------------------------------
 
           const {
             data: selectedResponse,
@@ -2006,10 +1893,6 @@ async function loadCustomerResponses() {
             return;
           }
 
-
-          // --------------------------------------------
-          // Accept selected provider
-          // --------------------------------------------
 
           const {
             error: acceptError
@@ -2042,10 +1925,6 @@ async function loadCustomerResponses() {
           }
 
 
-          // --------------------------------------------
-          // Reject other pending providers
-          // --------------------------------------------
-
           const {
             error: rejectOthersError
           } = await supabase
@@ -2075,10 +1954,6 @@ async function loadCustomerResponses() {
             );
           }
 
-
-          // --------------------------------------------
-          // Accept the job
-          // --------------------------------------------
 
           const {
             error: jobAcceptError
@@ -2116,10 +1991,6 @@ async function loadCustomerResponses() {
             "Provider accepted successfully!"
           );
 
-
-          // --------------------------------------------
-          // Refresh customer screen
-          // --------------------------------------------
 
           await loadCustomerResponses();
 
@@ -2520,6 +2391,37 @@ async function loadCustomerHistory() {
           Completed
         </p>
 
+        <div class="card">
+
+          <p>
+            <strong>
+              Payment
+            </strong>
+          </p>
+
+          <p>
+            Your job is completed. You can now pay securely through Paystack.
+          </p>
+
+          <button
+            type="button"
+            class="pay-now-btn"
+            data-request-id="${escapeHtml(
+              job.id
+            )}"
+          >
+            Pay Now
+          </button>
+
+          <p
+            class="payment-status"
+            data-payment-status="${escapeHtml(
+              job.id
+            )}"
+          ></p>
+
+        </div>
+
         <p>
           <strong>
             Date:
@@ -2546,6 +2448,184 @@ async function loadCustomerHistory() {
   historyList.innerHTML =
     html;
 
+
+  // ====================================================
+  // REAL PAYSTACK PAYMENT
+  // ====================================================
+
+  document
+    .querySelectorAll(
+      ".pay-now-btn"
+    )
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        async () => {
+
+          const requestId =
+            button.dataset.requestId;
+
+
+          if (!requestId) {
+
+            alert(
+              "Payment request could not be identified."
+            );
+
+            return;
+          }
+
+
+          const statusBox =
+            document.querySelector(
+              `[data-payment-status="${CSS.escape(
+                requestId
+              )}"]`
+            );
+
+
+          button.disabled =
+            true;
+
+          button.textContent =
+            "Preparing payment...";
+
+
+          if (statusBox) {
+
+            statusBox.textContent =
+              "Connecting to Paystack...";
+          }
+
+
+          try {
+
+            const {
+              data,
+              error
+            } =
+              await supabase.functions.invoke(
+                "create-paystack-payment",
+                {
+                  body: {
+                    request_id:
+                      requestId
+                  }
+                }
+              );
+
+
+            if (error) {
+
+              console.error(
+                "Paystack function error:",
+                error
+              );
+
+
+              if (statusBox) {
+
+                statusBox.textContent =
+                  "Payment could not be started.";
+              }
+
+
+              alert(
+                "Unable to start payment.\n\n" +
+                error.message
+              );
+
+
+              button.disabled =
+                false;
+
+              button.textContent =
+                "Pay Now";
+
+              return;
+            }
+
+
+            if (
+              !data ||
+              !data.success ||
+              !data.authorization_url
+            ) {
+
+              console.error(
+                "Paystack response:",
+                data
+              );
+
+
+              if (statusBox) {
+
+                statusBox.textContent =
+                  "Payment could not be created.";
+              }
+
+
+              alert(
+                data?.error ||
+                "Unable to create Paystack payment."
+              );
+
+
+              button.disabled =
+                false;
+
+              button.textContent =
+                "Pay Now";
+
+              return;
+            }
+
+
+            if (statusBox) {
+
+              statusBox.textContent =
+                "Redirecting to secure Paystack checkout...";
+            }
+
+
+            window.location.href =
+              data.authorization_url;
+
+          } catch (error) {
+
+            console.error(
+              "Payment error:",
+              error
+            );
+
+
+            if (statusBox) {
+
+              statusBox.textContent =
+                "Something went wrong while starting the payment.";
+            }
+
+
+            alert(
+              "Something went wrong while starting the payment."
+            );
+
+
+            button.disabled =
+              false;
+
+            button.textContent =
+              "Pay Now";
+          }
+        }
+      );
+    });
+
+
+  // ====================================================
+  // LOAD CUSTOMER RATINGS
+  // ====================================================
 
   for (
     const job of jobs
@@ -2896,16 +2976,16 @@ saveProvider?.addEventListener(
 
 
     const {
-  error
-} = await supabase
-  .from("service_providers")
-  .insert({
-    user_id: user.id,
-    business_name: name,
-    service_type: service,
-    location: area,
-    phone: phone
-  });
+      error
+    } = await supabase
+      .from("service_providers")
+      .insert({
+        user_id: user.id,
+        business_name: name,
+        service_type: service,
+        location: area,
+        phone: phone
+      });
 
 
     if (error) {
@@ -3500,65 +3580,46 @@ async function loadJobs() {
     }
 
 
-   if (completed) {
+    // ==================================================
+    // COMPLETED JOB
+    // ==================================================
 
-  const paymentStatus =
-    getDemoPaymentStatus(job.id);
+    if (completed) {
 
-  jobActions = `
-    <p>
-      <strong>
-        Completed
-      </strong>
-    </p>
+      jobActions = `
+        <p>
+          <strong>
+            Completed
+          </strong>
+        </p>
 
-    <div class="card">
+        <div class="card">
 
-      <p>
-        <strong>
-          Payment Status:
-        </strong>
+          <p>
+            <strong>
+              Payment:
+            </strong>
+          </p>
 
-        ${
-          paymentStatus === "paid"
-            ? "Paid (Demo)"
-            : "Payment Pending"
-        }
-      </p>
+          <p>
+            The customer can now pay securely through Paystack.
+          </p>
 
-      ${
-        paymentStatus !== "paid"
-          ? `
-            <button
-              type="button"
-              class="demo-paid-btn"
-              data-request-id="${escapeHtml(
-                job.id
-              )}"
-            >
-              Mark as Paid (Demo)
-            </button>
-          `
-          : `
-            <p>
-              <strong>
-                 Payment completed (Demo)
-              </strong>
-            </p>
-          `
-      }
+          <p>
+            Payment will be recorded automatically after Paystack confirms the transaction.
+          </p>
 
-    </div>
+        </div>
 
-    <div
-      id="job-review-${escapeHtml(
-        job.id
-      )}"
-    >
-      Loading customer review...
-    </div>
-  `;
-}
+        <div
+          id="job-review-${escapeHtml(
+            job.id
+          )}"
+        >
+          Loading customer review...
+        </div>
+      `;
+    }
 
 
     html += `
@@ -3629,119 +3690,6 @@ async function loadJobs() {
 
   jobsList.innerHTML =
     html;
-    // ====================================================
-// REAL PAYSTACK PAYMENT
-// ====================================================
-
-document
-  .querySelectorAll(
-    ".pay-now-btn"
-  )
-  .forEach(button => {
-
-    button.addEventListener(
-      "click",
-      async () => {
-
-        const requestId =
-          button.dataset.requestId;
-
-        if (!requestId) {
-          alert(
-            "Payment request could not be identified."
-          );
-          return;
-        }
-
-        button.disabled = true;
-        button.textContent =
-          "Preparing payment...";
-
-        try {
-
-          const {
-            data,
-            error
-          } = await supabase.functions.invoke(
-            "create-paystack-payment",
-            {
-              body: {
-                request_id:
-                  requestId
-              }
-            }
-          );
-
-          if (error) {
-
-            console.error(
-              "Paystack function error:",
-              error
-            );
-
-            alert(
-              "Unable to start payment.\n\n" +
-              error.message
-            );
-
-            button.disabled =
-              false;
-
-            button.textContent =
-              "Pay Now";
-
-            return;
-          }
-
-          if (
-            !data ||
-            !data.success ||
-            !data.authorization_url
-          ) {
-
-            console.error(
-              "Paystack response:",
-              data
-            );
-
-            alert(
-              data?.error ||
-              "Unable to create Paystack payment."
-            );
-
-            button.disabled =
-              false;
-
-            button.textContent =
-              "Pay Now";
-
-            return;
-          }
-
-          // Open the secure Paystack checkout page
-          window.location.href =
-            data.authorization_url;
-
-        } catch (error) {
-
-          console.error(
-            "Payment error:",
-            error
-          );
-
-          alert(
-            "Something went wrong while starting the payment."
-          );
-
-          button.disabled =
-            false;
-
-          button.textContent =
-            "Pay Now";
-        }
-      }
-    );
-  });
 
 
   // ====================================================
@@ -3826,25 +3774,25 @@ document
             error: responseError
           } = await supabase
             .from("service_responses")
-           .insert({
-  request_id:
-    requestId,
+            .insert({
+              request_id:
+                requestId,
 
-  provider_user_id:
-    user.id,
+              provider_user_id:
+                user.id,
 
-  provider_name:
-    name,
+              provider_name:
+                name,
 
-  provider_service:
-    service,
+              provider_service:
+                service,
 
-  provider_location:
-    area,
+              provider_location:
+                area,
 
-  status:
-    "pending"
-});
+              status:
+                "pending"
+            });
 
 
           if (responseError) {
@@ -4352,6 +4300,7 @@ authSubmit?.addEventListener(
 
 
     // SIGN UP
+
     if (
       authMode ===
       "signup"
@@ -4424,6 +4373,7 @@ authSubmit?.addEventListener(
 
 
     // SIGN IN
+
     const {
       data,
       error
