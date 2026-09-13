@@ -3629,13 +3629,13 @@ async function loadJobs() {
 
   jobsList.innerHTML =
     html;
-// ====================================================
-// DEMO PAYMENT — MARK AS PAID
+    // ====================================================
+// REAL PAYSTACK PAYMENT
 // ====================================================
 
 document
   .querySelectorAll(
-    ".demo-paid-btn"
+    ".pay-now-btn"
   )
   .forEach(button => {
 
@@ -3647,24 +3647,150 @@ document
           button.dataset.requestId;
 
         if (!requestId) {
+          alert(
+            "Payment request could not be identified."
+          );
           return;
         }
 
         button.disabled = true;
+        button.textContent =
+          "Preparing payment...";
 
-        setDemoPaymentStatus(
-          requestId,
-          "paid"
-        );
+        try {
 
-        await loadJobs();
-        await loadProviderReviews();
-        await loadNotifications();
+          const {
+            data,
+            error
+          } = await supabase.functions.invoke(
+            "create-paystack-payment",
+            {
+              body: {
+                request_id:
+                  requestId
+              }
+            }
+          );
 
+          if (error) {
+
+            console.error(
+              "Paystack function error:",
+              error
+            );
+
+            alert(
+              "Unable to start payment.\n\n" +
+              error.message
+            );
+
+            button.disabled =
+              false;
+
+            button.textContent =
+              "Pay Now";
+
+            return;
+          }
+
+          if (
+            !data ||
+            !data.success ||
+            !data.authorization_url
+          ) {
+
+            console.error(
+              "Paystack response:",
+              data
+            );
+
+            alert(
+              data?.error ||
+              "Unable to create Paystack payment."
+            );
+
+            button.disabled =
+              false;
+
+            button.textContent =
+              "Pay Now";
+
+            return;
+          }
+
+          // Open the secure Paystack checkout page
+          window.location.href =
+            data.authorization_url;
+
+        } catch (error) {
+
+          console.error(
+            "Payment error:",
+            error
+          );
+
+          alert(
+            "Something went wrong while starting the payment."
+          );
+
+          button.disabled =
+            false;
+
+          button.textContent =
+            "Pay Now";
+        }
       }
     );
-
   });
+if (completed) {
+
+  jobActions = `
+    <p>
+      <strong>
+        Completed
+      </strong>
+    </p>
+
+    <div class="card">
+
+      <p>
+        <strong>
+          Payment
+        </strong>
+      </p>
+
+      <p>
+        The job is completed. The customer can now make payment securely through Paystack.
+      </p>
+
+      <button
+        type="button"
+        class="pay-now-btn"
+        data-request-id="${escapeHtml(
+          job.id
+        )}"
+      >
+        Pay Now
+      </button>
+
+      <p
+        class="payment-status"
+        data-payment-status="${escapeHtml(
+          job.id
+        )}"
+      ></p>
+
+    </div>
+
+    <div
+      id="job-review-${escapeHtml(
+        job.id
+      )}"
+    >
+      Loading customer review...
+    </div>
+  `;
+}
 
   // ====================================================
   // WANT THIS JOB
