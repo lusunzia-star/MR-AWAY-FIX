@@ -3742,55 +3742,7 @@ document
       }
     );
   });
-if (completed) {
 
-  jobActions = `
-    <p>
-      <strong>
-        Completed
-      </strong>
-    </p>
-
-    <div class="card">
-
-      <p>
-        <strong>
-          Payment
-        </strong>
-      </p>
-
-      <p>
-        The job is completed. The customer can now make payment securely through Paystack.
-      </p>
-
-      <button
-        type="button"
-        class="pay-now-btn"
-        data-request-id="${escapeHtml(
-          job.id
-        )}"
-      >
-        Pay Now
-      </button>
-
-      <p
-        class="payment-status"
-        data-payment-status="${escapeHtml(
-          job.id
-        )}"
-      ></p>
-
-    </div>
-
-    <div
-      id="job-review-${escapeHtml(
-        job.id
-      )}"
-    >
-      Loading customer review...
-    </div>
-  `;
-}
 
   // ====================================================
   // WANT THIS JOB
