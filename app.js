@@ -192,6 +192,10 @@ function formatDate(value) {
 }
 
 
+// ======================================================
+// FIXED STAR DISPLAY
+// ======================================================
+
 function stars(rating) {
 
   const number =
@@ -210,6 +214,10 @@ function stars(rating) {
 }
 
 
+// ======================================================
+// SHOW / HIDE
+// ======================================================
+
 function showElement(element) {
 
   if (element) {
@@ -223,6 +231,29 @@ function hideElement(element) {
   if (element) {
     element.classList.add("hidden");
   }
+}
+
+
+// ======================================================
+// DATABASE ERROR HELPER
+// ======================================================
+
+function databaseErrorText(error) {
+
+  if (!error) {
+    return "Unknown database error.";
+  }
+
+  return [
+    error.message,
+    error.details,
+    error.hint,
+    error.code
+      ? `Code: ${error.code}`
+      : ""
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 
@@ -281,12 +312,7 @@ function whatsappNumber(phone) {
     cleanPhone(phone)
       .replace(/\+/g, "");
 
-  // South African local number:
-  // 0821234567 -> 27821234567
-
-  if (
-    number.startsWith("0")
-  ) {
+  if (number.startsWith("0")) {
 
     number =
       "27" +
@@ -300,6 +326,7 @@ function whatsappNumber(phone) {
 function phoneButtons(phone) {
 
   if (!phone) {
+
     return `
       <p>
         <strong>Phone:</strong>
@@ -432,7 +459,7 @@ async function getProviderForJob(requestId) {
   } = await supabase
     .from("service_responses")
     .select(
-      "id, provider_name, provider_service, provider_location, status"
+      "id, provider_name, provider_service, provider_location, provider_user_id, status"
     )
     .eq(
       "request_id",
@@ -504,7 +531,9 @@ async function loadNotifications() {
   const items = [];
 
 
+  // ====================================================
   // CUSTOMER NOTIFICATIONS
+  // ====================================================
 
   const {
     data: customerJobs,
@@ -618,91 +647,100 @@ async function loadNotifications() {
   }
 
 
+  // ====================================================
   // PROVIDER NOTIFICATIONS
+  //
+  // IMPORTANT:
+  // Provider ownership is now based on provider_user_id,
+  // not provider_name.
+  // ====================================================
 
-  const currentProviderName =
-    providerName?.value?.trim();
+  const {
+    data: providerResponses,
+    error: providerResponsesError
+  } = await supabase
+    .from("service_responses")
+    .select("*")
+    .eq(
+      "provider_user_id",
+      user.id
+    )
+    .order("id", {
+      ascending: false
+    });
 
-  if (currentProviderName) {
+  if (providerResponsesError) {
 
-    const {
-      data: providerResponses
-    } = await supabase
-      .from("service_responses")
-      .select("*")
-      .eq(
-        "provider_name",
-        currentProviderName
-      )
-      .order("id", {
-        ascending: false
-      });
+    console.error(
+      "Provider notification error:",
+      providerResponsesError
+    );
+  }
 
-    if (providerResponses) {
+  if (providerResponses) {
 
-      for (
-        const response of providerResponses
+    for (
+      const response of providerResponses
+    ) {
+
+      const {
+        data: job
+      } = await supabase
+        .from("service_requests")
+        .select("*")
+        .eq(
+          "id",
+          response.request_id
+        )
+        .maybeSingle();
+
+      if (!job) continue;
+
+      if (
+        response.status === "pending"
       ) {
 
-        const {
-          data: job
-        } = await supabase
-          .from("service_requests")
-          .select("*")
-          .eq(
-            "id",
-            response.request_id
-          )
-          .maybeSingle();
+        items.push(
+          `Your response was sent for the ${job.service_type} job.`
+        );
+      }
 
-        if (!job) continue;
+      if (
+        response.status === "accepted"
+      ) {
 
-        if (
-          response.status === "pending"
-        ) {
+        items.push(
+          `You were accepted for the ${job.service_type} job.`
+        );
+      }
 
-          items.push(
-            `Your response was sent for the ${job.service_type} job.`
-          );
-        }
+      if (
+        response.status === "rejected"
+      ) {
 
-        if (
-          response.status === "accepted"
-        ) {
+        items.push(
+          `Your response for the ${job.service_type} job was rejected.`
+        );
+      }
 
-          items.push(
-            `You were accepted for the ${job.service_type} job.`
-          );
-        }
+      if (
+        response.status === "in_progress" ||
+        job.status === "in_progress"
+      ) {
 
-        if (
-          response.status === "rejected"
-        ) {
+        items.push(
+          `Your ${job.service_type} job is currently in progress.`
+        );
+      }
 
-          items.push(
-            `Your response for the ${job.service_type} job was rejected.`
-          );
-        }
+      if (
+        response.status === "completed" ||
+        job.status === "completed"
+      ) {
 
-        if (
-          response.status === "in_progress" ||
-          job.status === "in_progress"
-        ) {
-
-          items.push(
-            `Your ${job.service_type} job is currently in progress.`
-          );
-        }
-
-        if (
-          response.status === "completed" ||
-          job.status === "completed"
-        ) {
-
-          items.push(
-            `Your ${job.service_type} job has been completed.`
-          );
-        }
+        items.push(
+          `Your ${job.service_type} job has been completed.`
+        );
       }
     }
   }
@@ -1530,6 +1568,12 @@ async function loadCustomerResponses() {
         <p>
           Unable to load your service requests.
         </p>
+
+        <small>
+          ${escapeHtml(
+            databaseErrorText(jobsError)
+          )}
+        </small>
       </div>
     `;
 
@@ -1866,6 +1910,30 @@ async function loadCustomerResponses() {
 
 
           const {
+            data: {
+              user
+            }
+          } = await supabase.auth.getUser();
+
+
+          if (!user) {
+
+            alert(
+              "Please sign in again."
+            );
+
+            button.disabled = false;
+
+            return;
+          }
+
+
+          // ----------------------------------------------
+          // Verify the provider response belongs to this
+          // customer's request.
+          // ----------------------------------------------
+
+          const {
             data: selectedResponse,
             error: responseError
           } = await supabase
@@ -1875,6 +1943,10 @@ async function loadCustomerResponses() {
               "id",
               responseId
             )
+            .eq(
+              "request_id",
+              requestId
+            )
             .maybeSingle();
 
 
@@ -1883,8 +1955,14 @@ async function loadCustomerResponses() {
             !selectedResponse
           ) {
 
+            console.error(
+              "Provider response lookup error:",
+              responseError
+            );
+
             alert(
-              "Unable to find this provider response."
+              "Unable to find this provider response.\n\n" +
+              databaseErrorText(responseError)
             );
 
             button.disabled =
@@ -1893,6 +1971,52 @@ async function loadCustomerResponses() {
             return;
           }
 
+
+          // ----------------------------------------------
+          // Make sure this customer owns the job.
+          // ----------------------------------------------
+
+          const {
+            data: customerJob,
+            error: customerJobError
+          } = await supabase
+            .from("service_requests")
+            .select("*")
+            .eq(
+              "id",
+              requestId
+            )
+            .eq(
+              "customer_id",
+              user.id
+            )
+            .maybeSingle();
+
+
+          if (
+            customerJobError ||
+            !customerJob
+          ) {
+
+            console.error(
+              "Customer job ownership error:",
+              customerJobError
+            );
+
+            alert(
+              "This service request could not be verified."
+            );
+
+            button.disabled =
+              false;
+
+            return;
+          }
+
+
+          // ----------------------------------------------
+          // Accept selected provider.
+          // ----------------------------------------------
 
           const {
             error: acceptError
@@ -1904,6 +2028,10 @@ async function loadCustomerResponses() {
             .eq(
               "id",
               responseId
+            )
+            .eq(
+              "request_id",
+              requestId
             );
 
 
@@ -1915,7 +2043,8 @@ async function loadCustomerResponses() {
             );
 
             alert(
-              "Unable to accept provider."
+              "Unable to accept provider.\n\n" +
+              databaseErrorText(acceptError)
             );
 
             button.disabled =
@@ -1924,6 +2053,10 @@ async function loadCustomerResponses() {
             return;
           }
 
+
+          // ----------------------------------------------
+          // Reject all other pending providers.
+          // ----------------------------------------------
 
           const {
             error: rejectOthersError
@@ -1952,8 +2085,15 @@ async function loadCustomerResponses() {
               "Other provider rejection error:",
               rejectOthersError
             );
+
+            // We don't stop here because the selected
+            // provider has already been accepted.
           }
 
+
+          // ----------------------------------------------
+          // Update the actual customer's job.
+          // ----------------------------------------------
 
           const {
             error: jobAcceptError
@@ -1966,6 +2106,10 @@ async function loadCustomerResponses() {
             .eq(
               "id",
               requestId
+            )
+            .eq(
+              "customer_id",
+              user.id
             );
 
 
@@ -1977,7 +2121,8 @@ async function loadCustomerResponses() {
             );
 
             alert(
-              "Provider accepted, but the job status could not be updated."
+              "Provider was accepted, but the job status could not be updated.\n\n" +
+              databaseErrorText(jobAcceptError)
             );
 
             button.disabled =
@@ -2045,7 +2190,8 @@ async function loadCustomerResponses() {
             );
 
             alert(
-              "Unable to reject provider."
+              "Unable to reject provider.\n\n" +
+              databaseErrorText(error)
             );
 
             button.disabled =
@@ -2168,6 +2314,10 @@ submitRequest?.addEventListener(
     }
 
 
+    // ==================================================
+    // POST CUSTOMER JOB
+    // ==================================================
+
     const {
       data: request,
       error
@@ -2193,8 +2343,31 @@ submitRequest?.addEventListener(
         error
       );
 
+
+      const errorText =
+        databaseErrorText(error);
+
+
+      const requestStatus =
+        document.getElementById(
+          "requestStatus"
+        );
+
+
+      if (requestStatus) {
+
+        requestStatus.textContent =
+          "Unable to post your service request. " +
+          errorText;
+      }
+
+
+      // IMPORTANT:
+      // We now show the real Supabase error.
       alert(
-        "Unable to post your service request."
+        "Unable to post your service request.\n\n" +
+        "Database error:\n" +
+        errorText
       );
 
       return;
@@ -2887,7 +3060,8 @@ async function loadCustomerRating(
         if (status) {
 
           status.textContent =
-            "Unable to submit review.";
+            "Unable to submit review.\n" +
+            databaseErrorText(error);
         }
 
         submitReviewButton.disabled =
@@ -2999,7 +3173,7 @@ saveProvider?.addEventListener(
 
         providerStatus.textContent =
           "Unable to register provider: " +
-          error.message;
+          databaseErrorText(error);
       }
 
       return;
@@ -3325,9 +3499,19 @@ async function loadJobs() {
     );
 
     jobsList.innerHTML = `
-      <p>
-        Unable to load available jobs.
-      </p>
+      <div class="card">
+
+        <p>
+          Unable to load available jobs.
+        </p>
+
+        <small>
+          ${escapeHtml(
+            databaseErrorText(error)
+          )}
+        </small>
+
+      </div>
     `;
 
     return;
@@ -3336,6 +3520,9 @@ async function loadJobs() {
 
   // ====================================================
   // EXISTING PROVIDER RESPONSES
+  //
+  // IMPORTANT FIX:
+  // Use provider_user_id instead of provider_name.
   // ====================================================
 
   const {
@@ -3345,8 +3532,8 @@ async function loadJobs() {
     .from("service_responses")
     .select("*")
     .eq(
-      "provider_name",
-      name
+      "provider_user_id",
+      user.id
     );
 
 
@@ -3356,6 +3543,24 @@ async function loadJobs() {
       "Provider response loading error:",
       responseLoadError
     );
+
+    jobsList.innerHTML = `
+      <div class="card">
+
+        <p>
+          Unable to load your provider responses.
+        </p>
+
+        <small>
+          ${escapeHtml(
+            databaseErrorText(responseLoadError)
+          )}
+        </small>
+
+      </div>
+    `;
+
+    return;
   }
 
 
@@ -3742,8 +3947,13 @@ async function loadJobs() {
           }
 
 
+          // =================================================
+          // DUPLICATE CHECK BY USER ID
+          // =================================================
+
           const {
-            data: duplicateResponse
+            data: duplicateResponse,
+            error: duplicateError
           } = await supabase
             .from("service_responses")
             .select("id")
@@ -3752,10 +3962,29 @@ async function loadJobs() {
               requestId
             )
             .eq(
-              "provider_name",
-              name
+              "provider_user_id",
+              user.id
             )
             .maybeSingle();
+
+
+          if (duplicateError) {
+
+            console.error(
+              "Duplicate response check error:",
+              duplicateError
+            );
+
+            alert(
+              "Unable to check this job.\n\n" +
+              databaseErrorText(duplicateError)
+            );
+
+            button.disabled =
+              false;
+
+            return;
+          }
 
 
           if (duplicateResponse) {
@@ -3769,6 +3998,10 @@ async function loadJobs() {
             return;
           }
 
+
+          // =================================================
+          // SAVE PROVIDER RESPONSE
+          // =================================================
 
           const {
             error: responseError
@@ -3803,8 +4036,9 @@ async function loadJobs() {
             );
 
             alert(
-              "Unable to request this job.\n\nDatabase error:\n" +
-              responseError.message
+              "Unable to request this job.\n\n" +
+              "Database error:\n" +
+              databaseErrorText(responseError)
             );
 
             button.disabled =
@@ -3846,6 +4080,53 @@ async function loadJobs() {
           button.disabled = true;
 
 
+          // ----------------------------------------------
+          // Update job only if it belongs to the provider
+          // through an accepted response.
+          // ----------------------------------------------
+
+          const {
+            data: acceptedResponse,
+            error: acceptedResponseError
+          } = await supabase
+            .from("service_responses")
+            .select("id")
+            .eq(
+              "request_id",
+              requestId
+            )
+            .eq(
+              "provider_user_id",
+              user.id
+            )
+            .eq(
+              "status",
+              "accepted"
+            )
+            .maybeSingle();
+
+
+          if (
+            acceptedResponseError ||
+            !acceptedResponse
+          ) {
+
+            console.error(
+              "Accepted provider check error:",
+              acceptedResponseError
+            );
+
+            alert(
+              "This job is not assigned to your provider account."
+            );
+
+            button.disabled =
+              false;
+
+            return;
+          }
+
+
           const {
             error: jobError
           } = await supabase
@@ -3866,11 +4147,13 @@ async function loadJobs() {
           if (jobError) {
 
             console.error(
+              "Start job error:",
               jobError
             );
 
             alert(
-              "Unable to start job."
+              "Unable to start job.\n\n" +
+              databaseErrorText(jobError)
             );
 
             button.disabled =
@@ -3893,8 +4176,8 @@ async function loadJobs() {
               requestId
             )
             .eq(
-              "provider_name",
-              name
+              "provider_user_id",
+              user.id
             );
 
 
@@ -3903,6 +4186,11 @@ async function loadJobs() {
             console.error(
               "Provider response update error:",
               responseError
+            );
+
+            alert(
+              "The job started, but the provider response status could not be updated.\n\n" +
+              databaseErrorText(responseError)
             );
           }
 
@@ -3934,6 +4222,52 @@ async function loadJobs() {
           button.disabled = true;
 
 
+          // ----------------------------------------------
+          // Verify this provider owns the response.
+          // ----------------------------------------------
+
+          const {
+            data: providerResponse,
+            error: providerResponseError
+          } = await supabase
+            .from("service_responses")
+            .select("id")
+            .eq(
+              "request_id",
+              requestId
+            )
+            .eq(
+              "provider_user_id",
+              user.id
+            )
+            .eq(
+              "status",
+              "in_progress"
+            )
+            .maybeSingle();
+
+
+          if (
+            providerResponseError ||
+            !providerResponse
+          ) {
+
+            console.error(
+              "Provider completion check error:",
+              providerResponseError
+            );
+
+            alert(
+              "This job is not assigned to your provider account."
+            );
+
+            button.disabled =
+              false;
+
+            return;
+          }
+
+
           const {
             error: jobError
           } = await supabase
@@ -3954,11 +4288,13 @@ async function loadJobs() {
           if (jobError) {
 
             console.error(
+              "Complete job error:",
               jobError
             );
 
             alert(
-              "Unable to complete job."
+              "Unable to complete job.\n\n" +
+              databaseErrorText(jobError)
             );
 
             button.disabled =
@@ -3981,8 +4317,8 @@ async function loadJobs() {
               requestId
             )
             .eq(
-              "provider_name",
-              name
+              "provider_user_id",
+              user.id
             );
 
 
@@ -3991,6 +4327,11 @@ async function loadJobs() {
             console.error(
               "Provider response update error:",
               responseError
+            );
+
+            alert(
+              "The job was completed, but the provider response status could not be updated.\n\n" +
+              databaseErrorText(responseError)
             );
           }
 
@@ -4299,7 +4640,9 @@ authSubmit?.addEventListener(
     }
 
 
+    // ==================================================
     // SIGN UP
+    // ==================================================
 
     if (
       authMode ===
@@ -4372,7 +4715,9 @@ authSubmit?.addEventListener(
     }
 
 
+    // ==================================================
     // SIGN IN
+    // ==================================================
 
     const {
       data,
