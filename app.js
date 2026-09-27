@@ -252,6 +252,40 @@ supabase.auth.onAuthStateChange((_event, session) => {
   }, 250);
 });
 
+
+/* =========================================================
+   PROVIDER PHONE FIELD
+   ========================================================= */
+
+function ensureProviderPhoneInput() {
+  let input = $("providerPhone");
+  if (input) return input;
+
+  const area = $("providerArea");
+  if (!area) return null;
+
+  const label = document.createElement("label");
+  label.htmlFor = "providerPhone";
+  label.textContent = "Cell Phone Number";
+  label.style.display = "block";
+  label.style.marginTop = "14px";
+
+  input = document.createElement("input");
+  input.id = "providerPhone";
+  input.type = "tel";
+  input.placeholder = "Cell phone number";
+  input.autocomplete = "tel";
+  input.inputMode = "tel";
+
+  area.insertAdjacentElement("afterend", label);
+  label.insertAdjacentElement("afterend", input);
+  return input;
+}
+
+function cleanPhone(phone) {
+  return String(phone || "").trim();
+}
+
 /* =========================================================
    CUSTOMER / PROVIDER MODE
    ========================================================= */
@@ -278,6 +312,8 @@ providerBtn?.addEventListener("click", async () => {
   services?.classList.add("hidden");
   provider?.classList.remove("hidden");
   providerJobs?.classList.remove("hidden");
+
+  ensureProviderPhoneInput();
 
   provider?.scrollIntoView({ behavior: "smooth" });
 
@@ -439,7 +475,7 @@ function refreshEstimate() {
     </p>
 
     <p style="font-size:1.3rem;font-weight:800;">
-      ${money(estimate.min)} – ${money(estimate.max)}
+      ${money(estimate.min)} to ${money(estimate.max)}
     </p>
 
     <p>
@@ -559,7 +595,7 @@ $("submitRequest")?.addEventListener("click", async () => {
 
   if (status) {
     status.textContent =
-      `Request posted successfully. Estimate: ${money(estimate.min)} – ${money(estimate.max)}.`;
+      `Request posted successfully. Estimate: ${money(estimate.min)} to ${money(estimate.max)}.`;
   }
 
   $("description").value = "";
@@ -567,7 +603,7 @@ $("submitRequest")?.addEventListener("click", async () => {
 
   alert(
     `Service request posted successfully!\n\n` +
-    `Estimate: ${money(estimate.min)} – ${money(estimate.max)}\n` +
+    `Estimate: ${money(estimate.min)} to ${money(estimate.max)}\n` +
     `Payment preference: ${
       paymentMethod === "cash" ? "Cash" : "Online"
     }`
@@ -591,12 +627,14 @@ $("saveProvider")?.addEventListener("click", async () => {
   const name = $("providerName")?.value.trim();
   const service = $("providerService")?.value.trim();
   const area = $("providerArea")?.value.trim();
+  const phoneInput = ensureProviderPhoneInput();
+  const phone = cleanPhone(phoneInput?.value);
   const status = $("providerStatus");
 
-  if (!name || !service || !area) {
+  if (!name || !service || !area || !phone) {
     if (status) {
       status.textContent =
-        "Please enter your name/business, service and area.";
+        "Please enter your name/business, service, area and cell phone number.";
     }
     return;
   }
@@ -619,6 +657,7 @@ $("saveProvider")?.addEventListener("click", async () => {
         business_name: name,
         service_type: service,
         location: area,
+        phone,
         available: true,
       })
       .eq("id", existing.id);
@@ -630,6 +669,7 @@ $("saveProvider")?.addEventListener("click", async () => {
         business_name: name,
         service_type: service,
         location: area,
+        phone,
         available: true,
         verified: false,
       });
@@ -702,6 +742,8 @@ async function loadProviderDashboard() {
     $("providerService")?.value.trim() || "";
   const providerArea =
     $("providerArea")?.value.trim() || "";
+
+  ensureProviderPhoneInput();
 
   if (!providerName || !providerService || !providerArea) {
     jobsList.innerHTML = `
@@ -2092,7 +2134,7 @@ async function loadProviderProfiles() {
   const { data, error } = await supabase
     .from("service_providers")
     .select(
-      "id, user_id, business_name, service_type, description, location, verified, available"
+      "id, user_id, business_name, service_type, description, location, phone, verified, available"
     )
     .eq("available", true)
     .order("created_at", { ascending: false })
@@ -2134,6 +2176,12 @@ async function loadProviderProfiles() {
             <strong>Area:</strong>
             ${escapeHtml(item.location || "")}
           </p>
+
+          ${
+            item.phone
+              ? `<p><strong>Phone:</strong> ${escapeHtml(item.phone)}</p>`
+              : ""
+          }
 
           ${
             item.description
