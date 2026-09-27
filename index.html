@@ -2,7 +2,6 @@
 <html lang="en">
 
 <head>
-
   <meta charset="UTF-8">
 
   <meta
@@ -33,12 +32,6 @@
   >
 
   <style>
-
-    /* ==================================================
-       PUBLIC BUSINESS WEBSITE SECTIONS
-       These styles do not change the app functionality.
-       ================================================== */
-
     .site-nav {
       display: flex;
       gap: 8px;
@@ -159,19 +152,17 @@
       opacity: 0.8;
     }
 
+    .provider-phone-note {
+      font-size: 0.9rem;
+      opacity: 0.8;
+      margin-top: 4px;
+    }
   </style>
-
 </head>
-
 
 <body>
 
-  <!-- ==================================================
-       HEADER
-       ================================================== -->
-
   <header>
-
     <div class="brand">
       MR AWAY FIX
     </div>
@@ -184,62 +175,26 @@
     >
       Sign in
     </button>
-
   </header>
-
-
-  <!-- ==================================================
-       PUBLIC WEBSITE NAVIGATION
-       ================================================== -->
 
   <nav
     class="site-nav"
     aria-label="Main website navigation"
   >
-
-    <a href="#about">
-      About
-    </a>
-
-    <a href="#services-info">
-      Services
-    </a>
-
-    <a href="#how-it-works">
-      How It Works
-    </a>
-
-    <a href="#customers">
-      Customers
-    </a>
-
-    <a href="#providers">
-      Providers
-    </a>
-
-    <a href="#payments">
-      Payments
-    </a>
-
-    <a href="#contact">
-      Contact
-    </a>
-
+    <a href="#about">About</a>
+    <a href="#services-info">Services</a>
+    <a href="#how-it-works">How It Works</a>
+    <a href="#customers">Customers</a>
+    <a href="#providers">Providers</a>
+    <a href="#payments">Payments</a>
+    <a href="#contact">Contact</a>
   </nav>
-
-
-  <!-- ==================================================
-       AUTHENTICATION
-       ================================================== -->
 
   <section
     id="authBox"
     class="card hidden"
   >
-
-    <h2 id="authTitle">
-      Sign in
-    </h2>
+    <h2 id="authTitle">Sign in</h2>
 
     <p>
       Sign in to manage your service requests and jobs.
@@ -283,33 +238,19 @@
     </button>
 
     <p id="authStatus"></p>
-
   </section>
 
-
-  <!-- ==================================================
-       MAIN
-       ================================================== -->
-
   <main>
-
-
-    <!-- ==================================================
-         PUBLIC HERO / BUSINESS INTRODUCTION
-         ================================================== -->
 
     <section
       id="about"
       class="card intro-box public-section"
     >
-
       <p class="tagline">
         LOCAL SERVICES MADE SIMPLE
       </p>
 
-      <h1>
-        MR AWAY FIX
-      </h1>
+      <h1>MR AWAY FIX</h1>
 
       <h2>
         Your problem. Someone's skill.
@@ -321,19 +262,20 @@
       </p>
 
       <p>
-        Customers can describe a job, find available service
-        providers, choose a provider, track the job and make
-        payments through the platform.
+        Customers can describe a job, receive an estimated
+        price range, choose a provider, approve the final
+        price, track the job and make payment through the
+        platform or by cash where supported.
       </p>
 
       <p>
         Service providers can create a profile, list their
-        skills, respond to available jobs, complete work and
-        build a record of customer reviews.
+        skills, respond to available jobs, propose a final
+        price, complete work and build a record of customer
+        reviews.
       </p>
 
       <div class="hero-buttons">
-
         <button
           id="customerBtn"
           type="button"
@@ -348,24 +290,14 @@
         >
           I offer a service
         </button>
-
       </div>
-
     </section>
-
-
-    <!-- ==================================================
-         CUSTOMER SERVICES
-         ================================================== -->
 
     <section
       id="services"
       class="card hidden"
     >
-
-      <h2>
-        Choose a Service
-      </h2>
+      <h2>Choose a Service</h2>
 
       <p>
         What service do you need?
@@ -416,35 +348,19 @@
         </button>
 
       </div>
-
     </section>
-
-
-    <!-- ==================================================
-         CUSTOMER REQUEST
-         ================================================== -->
 
     <section
       id="requestBox"
       class="card hidden"
     >
-
-      <h2>
-        Request a Service
-      </h2>
+      <h2>Request a Service</h2>
 
       <div class="card">
-
         <p>
-          <strong>
-            Selected service:
-          </strong>
-
-          <span id="selectedService">
-            —
-          </span>
+          <strong>Selected service:</strong>
+          <span id="selectedService">—</span>
         </p>
-
       </div>
 
       <label for="description">
@@ -453,7 +369,7 @@
 
       <textarea
         id="description"
-        placeholder="Tell the provider what needs to be done..."
+        placeholder="Tell MR AWAY FIX what needs to be done..."
         rows="5"
       ></textarea>
 
@@ -467,6 +383,12 @@
         placeholder="Enter your area or location"
       >
 
+      <!--
+        The complete app.js uses this element for the
+        customer job amount / estimated amount.
+        The JavaScript adds the automatic estimate and
+        payment preference UI around it.
+      -->
       <label for="jobAmount">
         Job Amount (R)
       </label>
@@ -476,7 +398,7 @@
         type="number"
         min="0"
         step="0.01"
-        placeholder="Enter job amount"
+        placeholder="MR AWAY FIX will estimate the job"
         inputmode="decimal"
       >
 
@@ -489,32 +411,16 @@
 
       <p id="requestStatus"></p>
 
-
-      <!-- CUSTOMER RESPONSES -->
-
       <div id="customerResponses">
-
-        <h3>
-          Provider Responses
-        </h3>
-
+        <h3>Provider Responses</h3>
       </div>
-
     </section>
-
-
-    <!-- ==================================================
-         PUBLIC SERVICES INFORMATION
-         ================================================== -->
 
     <section
       id="services-info"
       class="card public-section"
     >
-
-      <h2>
-        Services on MR AWAY FIX
-      </h2>
+      <h2>Services on MR AWAY FIX</h2>
 
       <p>
         Customers can use MR AWAY FIX to connect with
@@ -522,243 +428,155 @@
       </p>
 
       <div class="service-list">
-
-        <div class="service-item">
-          🔧 Plumbing
-        </div>
-
-        <div class="service-item">
-          ⚡ Electrical
-        </div>
-
-        <div class="service-item">
-          🎨 Painting
-        </div>
-
-        <div class="service-item">
-          🧹 Cleaning
-        </div>
-
-        <div class="service-item">
-          🌱 Gardening
-        </div>
-
-        <div class="service-item">
-          🛠️ Repairs
-        </div>
-
-        <div class="service-item">
-          🚚 Moving
-        </div>
-
-        <div class="service-item">
-          💇 Hair & Beauty
-        </div>
-
-        <div class="service-item">
-          💻 IT & Design
-        </div>
-
-        <div class="service-item">
-          📦 Other Services
-        </div>
-
+        <div class="service-item">🔧 Plumbing</div>
+        <div class="service-item">⚡ Electrical</div>
+        <div class="service-item">🎨 Painting</div>
+        <div class="service-item">🧹 Cleaning</div>
+        <div class="service-item">🌱 Gardening</div>
+        <div class="service-item">🛠️ Repairs</div>
+        <div class="service-item">🚚 Moving</div>
+        <div class="service-item">💇 Hair &amp; Beauty</div>
+        <div class="service-item">💻 IT &amp; Design</div>
+        <div class="service-item">📦 Other Services</div>
       </div>
 
       <p class="small-note">
         Service availability depends on the providers
         registered in the area.
       </p>
-
     </section>
-
-
-    <!-- ==================================================
-         CUSTOMERS
-         ================================================== -->
 
     <section
       id="customers"
       class="card public-section"
     >
-
-      <h2>
-        For Customers
-      </h2>
+      <h2>For Customers</h2>
 
       <div class="audience-grid">
-
         <div class="audience-box">
-
-          <h3>
-            Need something done?
-          </h3>
+          <h3>Need something done?</h3>
 
           <p>
-            Post the job you need help with and provide
-            the relevant location and job amount.
+            Choose a service and describe the job.
+            MR AWAY FIX provides an estimated price range
+            based on the service and job information.
           </p>
 
           <p>
-            Available providers can respond to your request.
-            You can review the responses and choose a provider.
+            Providers can respond and the customer can
+            choose a provider.
           </p>
-
         </div>
 
         <div class="audience-box">
-
-          <h3>
-            Manage your job
-          </h3>
+          <h3>Know the price before work starts</h3>
 
           <p>
-            Once a provider is accepted, the job can move
-            through the service process from accepted to
-            in progress and completed.
+            After a provider reviews the job, the provider
+            can propose a final price.
           </p>
 
           <p>
-            After completion, customers can make the applicable
-            payment and leave a rating or review.
+            The customer approves the final price before
+            the provider starts the job.
           </p>
-
         </div>
 
+        <div class="audience-box">
+          <h3>Choose how to pay</h3>
+
+          <p>
+            Supported jobs can use online payment through
+            Paystack or cash payment.
+          </p>
+
+          <p>
+            Cash payments are recorded separately so the
+            platform can track the job and applicable
+            MR AWAY FIX commission.
+          </p>
+        </div>
       </div>
-
     </section>
-
-
-    <!-- ==================================================
-         PROVIDERS
-         ================================================== -->
 
     <section
       id="providers"
       class="card public-section"
     >
-
-      <h2>
-        For Service Providers
-      </h2>
+      <h2>For Service Providers</h2>
 
       <div class="audience-grid">
 
         <div class="audience-box">
-
-          <h3>
-            Have a skill?
-          </h3>
+          <h3>Have a skill?</h3>
 
           <p>
-            Service providers can create a profile and
-            tell customers what services they provide and
-            which areas they serve.
+            Create a provider profile with your business
+            name, service, service area and cell phone number.
           </p>
-
         </div>
 
         <div class="audience-box">
-
-          <h3>
-            Find available jobs
-          </h3>
+          <h3>Find available jobs</h3>
 
           <p>
-            Providers can view available service requests
-            and respond to jobs that match their services.
+            View available service requests and respond
+            to jobs that match your services.
           </p>
-
         </div>
 
         <div class="audience-box">
-
-          <h3>
-            Build your reputation
-          </h3>
+          <h3>Build your reputation</h3>
 
           <p>
             Completed jobs can receive customer ratings
-            and reviews, helping providers build a record
-            of their work on the platform.
+            and reviews.
           </p>
-
         </div>
 
+        <div class="audience-box">
+          <h3>Cash jobs</h3>
+
+          <p>
+            Cash jobs can be recorded in the platform.
+            Applicable MR AWAY FIX commission is tracked
+            against the provider account.
+          </p>
+        </div>
       </div>
-
     </section>
-
-
-    <!-- ==================================================
-         PROVIDER PROFILES
-         ================================================== -->
 
     <section
       id="providerProfiles"
       class="card hidden"
     >
-
-      <h2>
-        Provider Profiles
-      </h2>
+      <h2>Provider Profiles</h2>
 
       <p>
         Find service providers by name, service or area.
       </p>
 
-      <div
-        id="providerProfilesList"
-      >
-
-        <p>
-          Loading providers...
-        </p>
-
+      <div id="providerProfilesList">
+        <p>Loading providers...</p>
       </div>
-
     </section>
-
-
-    <!-- ==================================================
-         NOTIFICATIONS
-         ================================================== -->
 
     <section
       id="notifications"
       class="card hidden"
     >
+      <h2>Notifications</h2>
 
-      <h2>
-        Notifications
-      </h2>
-
-      <div
-        id="notificationsList"
-      >
-
-        <p>
-          No notifications yet.
-        </p>
-
+      <div id="notificationsList">
+        <p>No notifications yet.</p>
       </div>
-
     </section>
-
-
-    <!-- ==================================================
-         PROVIDER REGISTRATION
-         ================================================== -->
 
     <section
       id="provider"
       class="card hidden"
     >
-
-      <h2>
-        Provider Registration
-      </h2>
+      <h2>Provider Registration</h2>
 
       <p>
         Register your service so customers can find you.
@@ -795,6 +613,24 @@
         placeholder="Example: Krugersdorp"
       >
 
+      <!-- NEW: PROVIDER CELL PHONE NUMBER -->
+      <label for="providerPhone">
+        Cell Phone Number
+      </label>
+
+      <input
+        id="providerPhone"
+        type="tel"
+        placeholder="Example: 071 234 5678"
+        autocomplete="tel"
+        inputmode="tel"
+      >
+
+      <p class="provider-phone-note">
+        Customers can use this number to contact you about
+        an accepted service job.
+      </p>
+
       <button
         id="saveProvider"
         type="button"
@@ -804,83 +640,42 @@
 
       <p id="providerStatus"></p>
 
-
-      <!-- PROVIDER REVIEWS -->
-
       <div id="providerReviews">
-
-        <h3>
-          Customer Reviews
-        </h3>
-
+        <h3>Customer Reviews</h3>
       </div>
-
     </section>
-
-
-    <!-- ==================================================
-         PROVIDER JOBS
-         ================================================== -->
 
     <section
       id="providerJobs"
       class="card hidden"
     >
-
       <div id="jobsList">
-
-        <h2>
-          Provider Jobs
-        </h2>
+        <h2>Provider Jobs</h2>
 
         <p>
           Loading jobs...
         </p>
-
       </div>
-
     </section>
-
-
-    <!-- ==================================================
-         JOB HISTORY
-         ================================================== -->
 
     <section
       id="jobHistory"
       class="card hidden"
     >
-
-      <h2>
-        Job History
-      </h2>
+      <h2>Job History</h2>
 
       <div id="historyList">
-
-        <p>
-          No completed jobs yet.
-        </p>
-
+        <p>No completed jobs yet.</p>
       </div>
-
     </section>
-
-
-    <!-- ==================================================
-         HOW IT WORKS
-         ================================================== -->
 
     <section
       id="how-it-works"
       class="card public-section"
     >
-
-      <h2>
-        How MR AWAY FIX Works
-      </h2>
+      <h2>How MR AWAY FIX Works</h2>
 
       <ol class="step-list">
-
         <li>
           Create an account or sign in.
         </li>
@@ -890,16 +685,20 @@
         </li>
 
         <li>
-          Customers provide the job location and amount.
+          MR AWAY FIX provides an estimated price range.
         </li>
 
         <li>
-          The service request becomes available to
-          suitable providers.
+          Customers choose whether they expect to pay cash
+          or online through Paystack.
         </li>
 
         <li>
-          Providers can respond to available jobs.
+          The service request becomes available to providers.
+        </li>
+
+        <li>
+          Providers respond to available jobs.
         </li>
 
         <li>
@@ -908,73 +707,63 @@
         </li>
 
         <li>
+          The provider proposes the final price.
+        </li>
+
+        <li>
+          The customer approves the final price.
+        </li>
+
+        <li>
           The provider starts and completes the job.
         </li>
 
         <li>
-          The customer can make the applicable payment
-          through the platform.
+          The payment is completed according to the selected
+          payment method.
         </li>
 
         <li>
-          The customer can rate and review the provider
-          after the completed service.
+          The customer can rate and review the provider.
         </li>
-
       </ol>
-
     </section>
-
-
-    <!-- ==================================================
-         PAYMENTS
-         ================================================== -->
 
     <section
       id="payments"
       class="card public-section"
     >
-
-      <h2>
-        Secure Online Payments
-      </h2>
+      <h2>Secure Payments</h2>
 
       <p>
-        MR AWAY FIX supports online payments for completed
-        service jobs through Paystack.
+        MR AWAY FIX is designed to support both online
+        Paystack payments and recorded cash payments.
       </p>
 
       <p>
-        Where a payment is processed through the platform,
-        the payment is recorded against the relevant service
-        request and the applicable provider payment allocation
-        is handled through the platform's payment system.
+        Online payments are processed through Paystack.
+        MR AWAY FIX should not store customers' card details.
       </p>
 
       <p>
-        Payment information is handled through the payment
-        provider rather than stored directly by MR AWAY FIX.
+        For cash jobs, the platform records the agreed final
+        amount and the provider's applicable MR AWAY FIX
+        commission separately.
+      </p>
+
+      <p>
+        Provider commission settlement is handled through
+        the platform's approved payment process.
       </p>
 
       <p class="small-note">
-        Payment availability depends on the current status
-        of the platform's payment services.
+        Payment features depend on the platform's payment
+        configuration and approved Paystack account status.
       </p>
-
     </section>
 
-
-    <!-- ==================================================
-         TRUST AND CUSTOMER EXPERIENCE
-         ================================================== -->
-
-    <section
-      class="card public-section"
-    >
-
-      <h2>
-        Building Trust
-      </h2>
+    <section class="card public-section">
+      <h2>Building Trust</h2>
 
       <p>
         MR AWAY FIX is designed to make the service process
@@ -983,67 +772,35 @@
       </p>
 
       <div class="trust-grid">
-
         <div class="trust-box">
-          <strong>
-            👤 Provider Profiles
-          </strong>
-
-          <p>
-            View provider information.
-          </p>
-
+          <strong>👤 Provider Profiles</strong>
+          <p>View provider information.</p>
         </div>
 
         <div class="trust-box">
-          <strong>
-            ⭐ Reviews
-          </strong>
-
-          <p>
-            Customers can rate completed services.
-          </p>
-
+          <strong>⭐ Reviews</strong>
+          <p>Customers can rate completed services.</p>
         </div>
 
         <div class="trust-box">
-          <strong>
-            💳 Online Payments
-          </strong>
-
-          <p>
-            Supported payments are processed through Paystack.
-          </p>
-
+          <strong>💳 Online Payments</strong>
+          <p>Supported payments use Paystack.</p>
         </div>
 
         <div class="trust-box">
-          <strong>
-            📋 Job Tracking
-          </strong>
-
-          <p>
-            Follow the job through its stages.
-          </p>
-
+          <strong>💵 Cash Payments</strong>
+          <p>Supported cash jobs are recorded.</p>
         </div>
 
+        <div class="trust-box">
+          <strong>📋 Job Tracking</strong>
+          <p>Follow the job through its stages.</p>
+        </div>
       </div>
-
     </section>
 
-
-    <!-- ==================================================
-         ABOUT THE BUSINESS
-         ================================================== -->
-
-    <section
-      class="card public-section"
-    >
-
-      <h2>
-        About MR AWAY FIX
-      </h2>
+    <section class="card public-section">
+      <h2>About MR AWAY FIX</h2>
 
       <p>
         MR AWAY FIX is a South African service marketplace
@@ -1068,21 +825,10 @@
           Your problem. Someone's skill.
         </strong>
       </p>
-
     </section>
 
-
-    <!-- ==================================================
-         LAUNCH MESSAGE
-         ================================================== -->
-
-    <section
-      class="launch-box public-section"
-    >
-
-      <p>
-        🚀
-      </p>
+    <section class="launch-box public-section">
+      <p>🚀</p>
 
       <strong>
         MR AWAY FIX — COMING SOON
@@ -1096,22 +842,13 @@
         Follow our launch updates and check back when
         MR AWAY FIX becomes available.
       </p>
-
     </section>
-
-
-    <!-- ==================================================
-         CONTACT / SUPPORT
-         ================================================== -->
 
     <section
       id="contact"
       class="card public-section contact-box"
     >
-
-      <h2>
-        Contact & Support
-      </h2>
+      <h2>Contact &amp; Support</h2>
 
       <p>
         Need help with a service request, provider account,
@@ -1128,21 +865,10 @@
         accessible service experience for customers and
         service providers.
       </p>
-
     </section>
 
-
-    <!-- ==================================================
-         FOOTER INFORMATION
-         ================================================== -->
-
-    <section
-      class="card public-section"
-    >
-
-      <h2>
-        MR AWAY FIX
-      </h2>
+    <section class="card public-section">
+      <h2>MR AWAY FIX</h2>
 
       <p>
         Local people. Local skills. Local opportunities.
@@ -1156,21 +882,12 @@
       <p>
         🇿🇦 Built for South Africa.
       </p>
-
     </section>
 
   </main>
 
-
-  <!-- ==================================================
-       FOOTER
-       ================================================== -->
-
   <footer>
-
-    <p>
-      © 2026 MR AWAY FIX
-    </p>
+    <p>© 2026 MR AWAY FIX</p>
 
     <p>
       Your problem. Someone's skill.
@@ -1179,21 +896,14 @@
     <p>
       Local services. Simple connections.
     </p>
-
   </footer>
-
-
-  <!-- ==================================================
-       APP JAVASCRIPT
-       ================================================== -->
 
   <script
     type="module"
-    src="app.js?v=14"
-    onload="console.log('MR AWAY FIX APP.JS LOADED v14')"
+    src="app.js?v=15"
+    onload="console.log('MR AWAY FIX APP.JS LOADED v15')"
     onerror="alert('APP.JS FILE NOT FOUND OR MODULE ERROR')"
   ></script>
 
 </body>
-
 </html>
