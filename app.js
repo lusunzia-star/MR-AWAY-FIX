@@ -1,174 +1,68 @@
-import { supabase } from './supabaseClient.js';
+import { supabase } from "./supabaseClient.js";
 
+/*
+==========================================================
+MR AWAY FIX — COMPLETE app.js
+==========================================================
+This is the complete browser-side application file.
 
-// ======================================================
-// MR AWAY FIX — MAIN ELEMENTS
-// ======================================================
+It includes:
+- Supabase authentication
+- Customer/provider switching
+- Automatic service estimates
+- Customer payment choice
+- Provider registration
+- Available jobs
+- Provider responses
+- Customer accepts/rejects provider
+- Final-price proposal + customer approval
+- Start / complete job
+- Cash payment confirmation
+- 10% MR AWAY FIX cash commission
+- Provider commission balance
+- Paystack online payment
+- Paystack commission settlement
+- Job history
+- Provider profiles
+- Notifications
+- Provider reviews
 
-const services = document.getElementById("services");
-const provider = document.getElementById("provider");
-const providerJobs = document.getElementById("providerJobs");
-const requestBox = document.getElementById("requestBox");
+IMPORTANT:
+- Never put a Paystack secret key in this file.
+- Paystack secret operations happen in Supabase Edge Functions.
+==========================================================
+*/
 
-const customerBtn = document.getElementById("customerBtn");
-const providerBtn = document.getElementById("providerBtn");
+const COMMISSION_RATE = 10;
 
+const SERVICE_RANGES = {
+  Plumbing: [450, 900],
+  Electrical: [450, 1000],
+  Painting: [600, 2500],
+  Cleaning: [300, 900],
+  Gardening: [350, 1200],
+  "Home Repairs": [400, 1200],
+  Other: [400, 1200],
+};
 
-// ======================================================
-// JOB HISTORY
-// ======================================================
+const $ = (id) => document.getElementById(id);
 
-const jobHistory = document.getElementById("jobHistory");
-const historyList = document.getElementById("historyList");
+const services = $("services");
+const provider = $("provider");
+const providerJobs = $("providerJobs");
+const requestBox = $("requestBox");
+const customerBtn = $("customerBtn");
+const providerBtn = $("providerBtn");
 
-
-// ======================================================
-// PROVIDER PROFILES
-// ======================================================
-
-const providerProfiles =
-  document.getElementById("providerProfiles");
-
-const providerProfilesList =
-  document.getElementById("providerProfilesList");
-
-
-// ======================================================
-// NOTIFICATIONS
-// ======================================================
-
-const notifications =
-  document.getElementById("notifications");
-
-const notificationsList =
-  document.getElementById("notificationsList");
-
-
-// ======================================================
-// AUTH
-// ======================================================
-
-const loginBtn = document.getElementById("loginBtn");
-const authBox = document.getElementById("authBox");
-const authTitle = document.getElementById("authTitle");
-const authEmail = document.getElementById("authEmail");
-const authPassword = document.getElementById("authPassword");
-const authSubmit = document.getElementById("authSubmit");
-const switchAuth = document.getElementById("switchAuth");
-const closeAuth = document.getElementById("closeAuth");
-const authStatus = document.getElementById("authStatus");
-
-
-// ======================================================
-// CUSTOMER REQUEST
-// ======================================================
-
-const submitRequest =
-  document.getElementById("submitRequest");
-
-const jobAmount =
-  document.getElementById("jobAmount");
-
-
-// ======================================================
-// PROVIDER REGISTRATION
-// ======================================================
-
-const providerName =
-  document.getElementById("providerName");
-
-const providerService =
-  document.getElementById("providerService");
-
-const providerArea =
-  document.getElementById("providerArea");
-
-const saveProvider =
-  document.getElementById("saveProvider");
-
-const providerStatus =
-  document.getElementById("providerStatus");
-
-
-// ======================================================
-// GLOBAL STATE
-// ======================================================
-
-let selectedService = "";
-let authMode = "signin";
-
-let localProvidersLoading = false;
-
-let providerSearchText = "";
-let providerServiceFilter = "";
-let providerAreaFilter = "";
-
-
-// ======================================================
-// CUSTOMER REQUEST LOCAL STORAGE
-// ======================================================
-
-const CUSTOMER_REQUEST_KEY =
-  "mrAwayFixCustomerRequests";
-
-
-function getSavedCustomerRequests() {
-
-  try {
-
-    return JSON.parse(
-      localStorage.getItem(
-        CUSTOMER_REQUEST_KEY
-      ) || "[]"
-    );
-
-  } catch {
-
-    return [];
-
-  }
+function money(value) {
+  return `R${Number(value || 0).toFixed(2)}`;
 }
 
-
-function saveCustomerRequestId(id) {
-
-  if (!id) return;
-
-  const ids =
-    getSavedCustomerRequests();
-
-  if (!ids.includes(id)) {
-    ids.push(id);
-  }
-
-  localStorage.setItem(
-    CUSTOMER_REQUEST_KEY,
-    JSON.stringify(ids)
-  );
+function round2(value) {
+  return Math.round(Number(value) * 100) / 100;
 }
-
-
-function removeCustomerRequestId(id) {
-
-  if (!id) return;
-
-  const ids =
-    getSavedCustomerRequests()
-      .filter(item => item !== id);
-
-  localStorage.setItem(
-    CUSTOMER_REQUEST_KEY,
-    JSON.stringify(ids)
-  );
-}
-
-
-// ======================================================
-// HELPERS
-// ======================================================
 
 function escapeHtml(value) {
-
   return String(value ?? "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -177,4692 +71,2400 @@ function escapeHtml(value) {
     .replace(/'/g, "&#039;");
 }
 
-
-function formatDate(value) {
-
-  if (!value) return "";
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return date.toLocaleString();
-}
-
-
-// ======================================================
-// FIXED STAR DISPLAY
-// ======================================================
-
-function stars(rating) {
-
-  const number =
-    Math.max(
-      0,
-      Math.min(
-        5,
-        Math.round(Number(rating) || 0)
-      )
-    );
-
-  return (
-    "".repeat(number) +
-    "".repeat(5 - number)
-  );
-}
-
-
-// ======================================================
-// SHOW / HIDE
-// ======================================================
-
-function showElement(element) {
-
-  if (element) {
-    element.classList.remove("hidden");
-  }
-}
-
-
-function hideElement(element) {
-
-  if (element) {
-    element.classList.add("hidden");
-  }
-}
-
-
-// ======================================================
-// DATABASE ERROR HELPER
-// ======================================================
-
-function databaseErrorText(error) {
-
-  if (!error) {
-    return "Unknown database error.";
-  }
-
+function errorText(error) {
   return [
-    error.message,
-    error.details,
-    error.hint,
-    error.code
-      ? `Code: ${error.code}`
-      : ""
-  ]
-    .filter(Boolean)
-    .join("\n");
+    error?.message,
+    error?.details,
+    error?.hint,
+    error?.code ? `Code: ${error.code}` : "",
+  ].filter(Boolean).join("\n");
 }
 
-
-// ======================================================
-// PROVIDER PHONE INPUT
-//
-// The HTML does not need to be changed.
-// This creates the phone field automatically.
-// ======================================================
-
-function ensureProviderPhoneInput() {
-
-  let phoneInput =
-    document.getElementById("providerPhone");
-
-  if (phoneInput) {
-    return phoneInput;
-  }
-
-  if (!providerArea) {
-    return null;
-  }
-
-  phoneInput =
-    document.createElement("input");
-
-  phoneInput.id = "providerPhone";
-  phoneInput.type = "tel";
-  phoneInput.placeholder = "Phone number";
-  phoneInput.autocomplete = "tel";
-
-  providerArea.insertAdjacentElement(
-    "afterend",
-    phoneInput
-  );
-
-  return phoneInput;
-}
-
-
-// ======================================================
-// PHONE HELPERS
-// ======================================================
-
-function cleanPhone(phone) {
-
-  return String(phone || "")
-    .trim()
-    .replace(/[^\d+]/g, "");
-}
-
-
-function whatsappNumber(phone) {
-
-  let number =
-    cleanPhone(phone)
-      .replace(/\+/g, "");
-
-  if (number.startsWith("0")) {
-
-    number =
-      "27" +
-      number.substring(1);
-  }
-
-  return number;
-}
-
-
-function phoneButtons(phone) {
-
-  if (!phone) {
-
-    return `
-      <p>
-        <strong>Phone:</strong>
-        Not provided
-      </p>
-    `;
-  }
-
-  const clean =
-    cleanPhone(phone);
-
-  const wa =
-    whatsappNumber(phone);
-
-  return `
-    <p>
-      <strong>Phone:</strong>
-      ${escapeHtml(phone)}
-    </p>
-
-    <div class="provider-contact-actions">
-
-      <a
-        href="tel:${escapeHtml(clean)}"
-        class="primary"
-        style="
-          display:inline-block;
-          text-decoration:none;
-          border-radius:12px;
-          padding:13px 18px;
-          margin:5px;
-          font-weight:700;
-        "
-      >
-        Call Provider
-      </a>
-
-      <a
-        href="https://wa.me/${escapeHtml(wa)}"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="outline"
-        style="
-          display:inline-block;
-          text-decoration:none;
-          border-radius:12px;
-          padding:13px 18px;
-          margin:5px;
-          font-weight:700;
-        "
-      >
-        WhatsApp
-      </a>
-
-    </div>
-  `;
-}
-
-
-// ======================================================
-// ENSURE CUSTOMER PROFILE
-// ======================================================
-
-async function ensureCustomerProfile(user) {
-
-  if (!user) return null;
-
-  const {
-    data: existing,
-    error: selectError
-  } = await supabase
-    .from("profiles")
-    .select("id, role")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (selectError) {
-
-    console.error(
-      "Profile check error:",
-      selectError
-    );
-
-    return null;
-  }
-
-  if (existing) {
-    return existing;
-  }
-
-  const {
-    data: created,
-    error: insertError
-  } = await supabase
-    .from("profiles")
-    .insert({
-      id: user.id,
-      role: "customer"
-    })
-    .select("id, role")
-    .single();
-
-  if (insertError) {
-
-    console.error(
-      "Profile creation error:",
-      insertError
-    );
-
-    return null;
-  }
-
-  return created;
-}
-
-
-// ======================================================
-// GET PROVIDER NAME FOR A JOB
-// ======================================================
-
-async function getProviderForJob(requestId) {
-
-  if (!requestId) {
-    return "Provider";
-  }
-
-  const {
-    data: responses,
-    error
-  } = await supabase
-    .from("service_responses")
-    .select(
-      "id, provider_name, provider_service, provider_location, provider_user_id, status"
-    )
-    .eq(
-      "request_id",
-      requestId
-    )
-    .order("id", {
-      ascending: false
-    });
-
+async function currentUser() {
+  const { data, error } = await supabase.auth.getUser();
   if (error) {
-
-    console.error(
-      "Provider lookup error:",
-      error
-    );
-
-    return "Provider";
+    console.error("Auth error:", error);
+    return null;
   }
-
-  if (!responses || !responses.length) {
-    return "Provider";
-  }
-
-  const selected =
-    responses.find(
-      item =>
-        item.status === "completed" ||
-        item.status === "in_progress" ||
-        item.status === "accepted"
-    ) || responses[0];
-
-  return (
-    selected.provider_name ||
-    "Provider"
-  );
+  return data?.user || null;
 }
 
+/* =========================================================
+   AUTHENTICATION
+   ========================================================= */
 
-// ======================================================
-// NOTIFICATIONS
-// ======================================================
+let authMode = "signin";
 
-async function loadNotifications() {
+function showAuthBox(mode = "signin") {
+  authMode = mode;
 
-  if (
-    !notifications ||
-    !notificationsList
-  ) {
-    return;
+  $("authBox")?.classList.remove("hidden");
+
+  if ($("authTitle")) {
+    $("authTitle").textContent =
+      mode === "signup" ? "Create your account" : "Sign in";
   }
 
-  const {
-    data: {
-      user
-    }
-  } = await supabase.auth.getUser();
+  if ($("authSubmit")) {
+    $("authSubmit").textContent =
+      mode === "signup" ? "Create account" : "Sign in";
+  }
+
+  if ($("switchAuth")) {
+    $("switchAuth").textContent =
+      mode === "signup"
+        ? "I already have an account"
+        : "Create a new account";
+  }
+
+  if ($("authStatus")) {
+    $("authStatus").textContent = "";
+  }
+}
+
+function hideAuthBox() {
+  $("authBox")?.classList.add("hidden");
+}
+
+async function updateAccountButton(user = null) {
+  const button = $("loginBtn");
+  if (!button) return;
 
   if (!user) {
-
-    hideElement(notifications);
-
-    notificationsList.innerHTML = "";
-
+    button.textContent = "Sign in";
     return;
   }
 
-  showElement(notifications);
-
-  const items = [];
-
-
-  // ====================================================
-  // CUSTOMER NOTIFICATIONS
-  // ====================================================
-
-  const {
-    data: customerJobs,
-    error: customerJobsError
-  } = await supabase
-    .from("service_requests")
-    .select("*")
-    .eq(
-      "customer_id",
-      user.id
-    )
-    .order("id", {
-      ascending: false
-    });
-
-  if (
-    !customerJobsError &&
-    customerJobs
-  ) {
-
-    for (const job of customerJobs) {
-
-      const {
-        data: responses
-      } = await supabase
-        .from("service_responses")
-        .select("*")
-        .eq(
-          "request_id",
-          job.id
-        )
-        .order("id", {
-          ascending: false
-        });
-
-      if (
-        job.status === "posted" &&
-        job.is_active !== false
-      ) {
-
-        items.push(
-          `Your ${job.service_type} request is waiting for a provider.`
-        );
-      }
-
-      if (responses) {
-
-        for (const response of responses) {
-
-          const providerNameText =
-            response.provider_name ||
-            "A provider";
-
-          if (
-            response.status === "pending"
-          ) {
-
-            items.push(
-              `${providerNameText} has responded to your ${job.service_type} request.`
-            );
-          }
-
-          if (
-            response.status === "accepted"
-          ) {
-
-            items.push(
-              `${providerNameText} was accepted for your ${job.service_type} job.`
-            );
-          }
-
-          if (
-            response.status === "rejected"
-          ) {
-
-            items.push(
-              `${providerNameText}'s response to your ${job.service_type} request was rejected.`
-            );
-          }
-
-          if (
-            response.status === "in_progress" ||
-            job.status === "in_progress"
-          ) {
-
-            items.push(
-              `Your ${job.service_type} job is in progress with ${providerNameText}.`
-            );
-          }
-
-          if (
-            response.status === "completed"
-          ) {
-
-            items.push(
-              `Your ${job.service_type} job with ${providerNameText} has been completed.`
-            );
-          }
-        }
-      }
-
-      if (
-        job.status === "completed"
-      ) {
-
-        items.push(
-          `Your ${job.service_type} job has been completed.`
-        );
-      }
-    }
-  }
-
-
-  // ====================================================
-  // PROVIDER NOTIFICATIONS
-  //
-  // IMPORTANT:
-  // Provider ownership is now based on provider_user_id,
-  // not provider_name.
-  // ====================================================
-
-  const {
-    data: providerResponses,
-    error: providerResponsesError
-  } = await supabase
-    .from("service_responses")
-    .select("*")
-    .eq(
-      "provider_user_id",
-      user.id
-    )
-    .order("id", {
-      ascending: false
-    });
-
-  if (providerResponsesError) {
-
-    console.error(
-      "Provider notification error:",
-      providerResponsesError
-    );
-  }
-
-  if (providerResponses) {
-
-    for (
-      const response of providerResponses
-    ) {
-
-      const {
-        data: job
-      } = await supabase
-        .from("service_requests")
-        .select("*")
-        .eq(
-          "id",
-          response.request_id
-        )
-        .maybeSingle();
-
-      if (!job) continue;
-
-      if (
-        response.status === "pending"
-      ) {
-
-        items.push(
-          `Your response was sent for the ${job.service_type} job.`
-        );
-      }
-
-      if (
-        response.status === "accepted"
-      ) {
-
-        items.push(
-          `You were accepted for the ${job.service_type} job.`
-        );
-      }
-
-      if (
-        response.status === "rejected"
-      ) {
-
-        items.push(
-          `Your response for the ${job.service_type} job was rejected.`
-        );
-      }
-
-      if (
-        response.status === "in_progress" ||
-        job.status === "in_progress"
-      ) {
-
-        items.push(
-          `Your ${job.service_type} job is currently in progress.`
-        );
-      }
-
-      if (
-        response.status === "completed" ||
-        job.status === "completed"
-      ) {
-
-        items.push(
-          `Your ${job.service_type} job has been completed.`
-        );
-      }
-    }
-  }
-
-
-  const uniqueItems =
-    [...new Set(items)].slice(0, 20);
-
-  if (!uniqueItems.length) {
-
-    notificationsList.innerHTML = `
-      <div class="card">
-        <p>No new notifications.</p>
-      </div>
-    `;
-
-    return;
-  }
-
-  notificationsList.innerHTML =
-    uniqueItems.map(item => `
-      <div class="card">
-        <p>
-          ${escapeHtml(item)}
-        </p>
-      </div>
-    `).join("");
+  button.textContent = "Account";
 }
 
+async function handleAuthSubmit() {
+  const email = $("authEmail")?.value.trim();
+  const password = $("authPassword")?.value;
+  const status = $("authStatus");
 
-// ======================================================
-// PROVIDER SEARCH & FILTER
-// ======================================================
-
-async function loadLocalServiceProviders() {
-
-  if (
-    !providerProfiles ||
-    !providerProfilesList
-  ) {
+  if (!email || !password) {
+    if (status) status.textContent = "Enter your email and password.";
     return;
   }
 
-  if (localProvidersLoading) {
+  if (password.length < 6) {
+    if (status) status.textContent = "Password must be at least 6 characters.";
     return;
   }
 
-  localProvidersLoading = true;
+  if (status) status.textContent = "Please wait...";
 
-  try {
-
-    const {
-      data: providers,
-      error
-    } = await supabase
-      .from("service_providers")
-      .select(
-        "id, business_name, service_type, location, phone"
-      )
-      .order("id", {
-        ascending: false
-      });
+  if (authMode === "signup") {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+    });
 
     if (error) {
-
-      console.error(
-        "Provider loading error:",
-        error
-      );
-
-      providerProfilesList.innerHTML = `
-        <div class="card">
-          <p>Unable to load providers.</p>
-        </div>
-      `;
-
+      if (status) status.textContent = errorText(error);
       return;
     }
 
-
-    let controls =
-      document.getElementById(
-        "providerSearchControls"
-      );
-
-
-    if (!controls) {
-
-      controls =
-        document.createElement("div");
-
-      controls.id =
-        "providerSearchControls";
-
-      controls.className =
-        "card";
-
-      controls.innerHTML = `
-        <input
-          id="providerSearchInput"
-          type="text"
-          placeholder="Search provider..."
-        >
-
-        <select
-          id="providerServiceFilter"
-        >
-          <option value="">
-            All services
-          </option>
-        </select>
-
-        <input
-          id="providerAreaFilter"
-          type="text"
-          placeholder="Search area..."
-        >
-
-        <button
-          id="clearProviderFilters"
-          type="button"
-          class="outline"
-        >
-          Clear
-        </button>
-
-        <p id="providerResultsCount"></p>
-      `;
-
-
-      providerProfiles.insertBefore(
-        controls,
-        providerProfilesList
-      );
-
-
-      const searchInput =
-        document.getElementById(
-          "providerSearchInput"
-        );
-
-      const serviceFilter =
-        document.getElementById(
-          "providerServiceFilter"
-        );
-
-      const areaFilter =
-        document.getElementById(
-          "providerAreaFilter"
-        );
-
-      const clearButton =
-        document.getElementById(
-          "clearProviderFilters"
-        );
-
-
-      searchInput?.addEventListener(
-        "input",
-        () => {
-
-          providerSearchText =
-            searchInput.value
-              .trim()
-              .toLowerCase();
-
-          renderProviderResults(
-            providers || []
-          );
-        }
-      );
-
-
-      serviceFilter?.addEventListener(
-        "change",
-        () => {
-
-          providerServiceFilter =
-            serviceFilter.value
-              .trim()
-              .toLowerCase();
-
-          renderProviderResults(
-            providers || []
-          );
-        }
-      );
-
-
-      areaFilter?.addEventListener(
-        "input",
-        () => {
-
-          providerAreaFilter =
-            areaFilter.value
-              .trim()
-              .toLowerCase();
-
-          renderProviderResults(
-            providers || []
-          );
-        }
-      );
-
-
-      clearButton?.addEventListener(
-        "click",
-        () => {
-
-          searchInput.value = "";
-          serviceFilter.value = "";
-          areaFilter.value = "";
-
-          providerSearchText = "";
-          providerServiceFilter = "";
-          providerAreaFilter = "";
-
-          renderProviderResults(
-            providers || []
-          );
-        }
-      );
+    if (data?.user) {
+      await supabase.from("profiles").upsert({
+        id: data.user.id,
+        role: "customer",
+      });
     }
 
-
-    const serviceFilter =
-      document.getElementById(
-        "providerServiceFilter"
-      );
-
-
-    const servicesFound = [
-      ...new Set(
-        (providers || [])
-          .map(item =>
-            item.service_type
-          )
-          .filter(Boolean)
-      )
-    ].sort();
-
-
-    if (serviceFilter) {
-
-      serviceFilter.innerHTML =
-        `<option value="">All services</option>` +
-        servicesFound.map(service => `
-          <option
-            value="${escapeHtml(service)}"
-          >
-            ${escapeHtml(service)}
-          </option>
-        `).join("");
-
-      serviceFilter.value =
-        providerServiceFilter;
+    if (status) {
+      status.textContent =
+        "Account created. Please check your email to confirm your account, then sign in.";
     }
-
-
-    renderProviderResults(
-      providers || []
-    );
-
-  } finally {
-
-    localProvidersLoading = false;
-  }
-}
-
-
-// ======================================================
-// RENDER PROVIDER RESULTS
-// ======================================================
-
-async function renderProviderResults(
-  providers
-) {
-
-  if (!providerProfilesList) {
-    return;
-  }
-
-
-  const filtered =
-    providers.filter(item => {
-
-      const name =
-        String(
-          item.business_name || ""
-        ).toLowerCase();
-
-      const service =
-        String(
-          item.service_type || ""
-        ).toLowerCase();
-
-      const area =
-        String(
-          item.location || ""
-        ).toLowerCase();
-
-
-      const matchesSearch =
-        !providerSearchText ||
-        name.includes(providerSearchText) ||
-        service.includes(providerSearchText) ||
-        area.includes(providerSearchText);
-
-
-      const matchesService =
-        !providerServiceFilter ||
-        service === providerServiceFilter;
-
-
-      const matchesArea =
-        !providerAreaFilter ||
-        area.includes(providerAreaFilter);
-
-
-      return (
-        matchesSearch &&
-        matchesService &&
-        matchesArea
-      );
-    });
-
-
-  const count =
-    document.getElementById(
-      "providerResultsCount"
-    );
-
-
-  if (count) {
-
-    count.textContent =
-      `${filtered.length} provider(s) found`;
-  }
-
-
-  if (!filtered.length) {
-
-    providerProfilesList.innerHTML = `
-      <div class="card">
-        <p>No providers found.</p>
-      </div>
-    `;
 
     return;
   }
 
-
-  providerProfilesList.innerHTML =
-    filtered.map(item => `
-      <div
-        class="card provider-card"
-        data-provider-id="${escapeHtml(item.id)}"
-      >
-
-        <h3>
-          ${escapeHtml(
-            item.business_name
-          )}
-        </h3>
-
-        <p>
-          <strong>Service:</strong>
-          ${escapeHtml(
-            item.service_type
-          )}
-        </p>
-
-        <p>
-          <strong>Area:</strong>
-          ${escapeHtml(
-            item.location
-          )}
-        </p>
-
-        ${phoneButtons(item.phone)}
-
-        <div
-          class="provider-rating"
-          data-rating-provider="${escapeHtml(
-            item.business_name
-          )}"
-        >
-          Loading rating...
-        </div>
-
-        <button
-          type="button"
-          class="outline view-provider-btn"
-          data-provider-name="${escapeHtml(
-            item.business_name
-          )}"
-        >
-          View Provider
-        </button>
-
-        <div
-          class="provider-details hidden"
-          data-provider-details="${escapeHtml(
-            item.business_name
-          )}"
-        ></div>
-
-      </div>
-    `).join("");
-
-
-  // ====================================================
-  // RATINGS
-  // ====================================================
-
-  for (const item of filtered) {
-
-    const {
-      data: reviews
-    } = await supabase
-      .from("service_reviews")
-      .select(
-        "rating, review"
-      )
-      .eq(
-        "provider_name",
-        item.business_name
-      );
-
-
-    const ratingBox =
-      document.querySelector(
-        `[data-rating-provider="${CSS.escape(
-          item.business_name
-        )}"]`
-      );
-
-
-    if (!ratingBox) continue;
-
-
-    if (
-      !reviews ||
-      !reviews.length
-    ) {
-
-      ratingBox.innerHTML =
-        `No reviews yet`;
-
-      continue;
-    }
-
-
-    const average =
-      reviews.reduce(
-        (sum, review) =>
-          sum +
-          Number(
-            review.rating || 0
-          ),
-        0
-      ) / reviews.length;
-
-
-    ratingBox.innerHTML = `
-      <strong>
-        ${stars(average)}
-      </strong>
-      ${average.toFixed(1)}/5
-      (${reviews.length}
-      review${reviews.length === 1 ? "" : "s"})
-    `;
-  }
-
-
-  // ====================================================
-  // VIEW PROVIDER
-  // ====================================================
-
-  document
-    .querySelectorAll(
-      ".view-provider-btn"
-    )
-    .forEach(button => {
-
-      button.addEventListener(
-        "click",
-        async () => {
-
-          const name =
-            button.dataset.providerName;
-
-
-          const details =
-            document.querySelector(
-              `[data-provider-details="${CSS.escape(
-                name
-              )}"]`
-            );
-
-
-          if (!details) return;
-
-
-          if (
-            !details.classList.contains(
-              "hidden"
-            )
-          ) {
-
-            details.classList.add(
-              "hidden"
-            );
-
-            button.textContent =
-              "View Provider";
-
-            return;
-          }
-
-
-          details.classList.remove(
-            "hidden"
-          );
-
-          button.textContent =
-            "Hide Provider";
-
-
-          const providerRecord =
-            providers.find(
-              item =>
-                String(item.business_name) ===
-                String(name)
-            );
-
-
-          const {
-            data: reviews
-          } = await supabase
-            .from("service_reviews")
-            .select(
-              "rating, review"
-            )
-            .eq(
-              "provider_name",
-              name
-            )
-            .order("id", {
-              ascending: false
-            })
-            .limit(5);
-
-
-          details.innerHTML = `
-            <hr>
-
-            <h4>
-              Provider Details
-            </h4>
-
-            ${phoneButtons(
-              providerRecord?.phone
-            )}
-
-            <h4>
-              Customer Reviews
-            </h4>
-
-            ${
-              !reviews ||
-              !reviews.length
-                ? `
-                  <p>
-                    No customer reviews yet.
-                  </p>
-                `
-                : reviews.map(review => `
-                  <div class="card">
-
-                    <p>
-                      <strong>
-                        ${stars(
-                          review.rating
-                        )}
-                      </strong>
-                    </p>
-
-                    <p>
-                      ${escapeHtml(
-                        review.review ||
-                        "No written review."
-                      )}
-                    </p>
-
-                  </div>
-                `).join("")
-            }
-          `;
-        }
-      );
-    });
-}
-
-
-// ======================================================
-// CUSTOMER MODE
-// ======================================================
-
-customerBtn?.addEventListener(
-  "click",
-  async () => {
-
-    showElement(services);
-    showElement(providerProfiles);
-    showElement(jobHistory);
-
-    hideElement(provider);
-    hideElement(providerJobs);
-
-    await loadCustomerResponses();
-    await loadCustomerHistory();
-    await loadLocalServiceProviders();
-    await loadNotifications();
-
-    services?.scrollIntoView({
-      behavior: "smooth"
-    });
-  }
-);
-
-
-// ======================================================
-// PROVIDER MODE
-// ======================================================
-
-providerBtn?.addEventListener(
-  "click",
-  async () => {
-
-    hideElement(services);
-    hideElement(providerProfiles);
-    hideElement(jobHistory);
-
-    showElement(provider);
-    showElement(providerJobs);
-
-    ensureProviderPhoneInput();
-
-    await loadJobs();
-    await loadProviderReviews();
-    await loadNotifications();
-
-    provider?.scrollIntoView({
-      behavior: "smooth"
-    });
-  }
-);
-
-
-// ======================================================
-// REFRESH PROVIDER JOBS WHEN DETAILS CHANGE
-// ======================================================
-
-let providerJobsRefreshTimer = null;
-
-
-function refreshProviderJobs() {
-
-  clearTimeout(
-    providerJobsRefreshTimer
-  );
-
-  providerJobsRefreshTimer =
-    setTimeout(
-      async () => {
-
-        await loadJobs();
-        await loadProviderReviews();
-        await loadNotifications();
-
-      },
-      400
-    );
-}
-
-
-providerName?.addEventListener(
-  "input",
-  refreshProviderJobs
-);
-
-
-providerService?.addEventListener(
-  "input",
-  refreshProviderJobs
-);
-
-
-providerArea?.addEventListener(
-  "input",
-  refreshProviderJobs
-);
-
-
-// ======================================================
-// SERVICE BUTTONS
-// ======================================================
-
-document
-  .querySelectorAll(
-    "[data-service]"
-  )
-  .forEach(button => {
-
-    button.addEventListener(
-      "click",
-      async () => {
-
-        selectedService =
-          button.dataset.service;
-
-
-        const selectedServiceBox =
-          document.getElementById(
-            "selectedService"
-          );
-
-
-        if (selectedServiceBox) {
-
-          selectedServiceBox.textContent =
-            selectedService;
-        }
-
-
-        if (requestBox) {
-
-          requestBox.dataset.service =
-            selectedService;
-
-          delete requestBox.dataset.requestId;
-
-          showElement(requestBox);
-
-          requestBox.scrollIntoView({
-            behavior: "smooth"
-          });
-        }
-
-
-        await loadCustomerResponses();
-        await loadCustomerHistory();
-        await loadLocalServiceProviders();
-        await loadNotifications();
-      }
-    );
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
   });
 
-
-// ======================================================
-// CUSTOMER RESPONSES
-// ======================================================
-
-async function loadCustomerResponses() {
-
-  const responsesBox =
-    document.getElementById(
-      "customerResponses"
-    );
-
-  if (!responsesBox) {
+  if (error) {
+    if (status) status.textContent = errorText(error);
     return;
   }
 
-
-  const {
-    data: {
-      user
-    }
-  } = await supabase.auth.getUser();
-
-
-  if (!user) {
-
-    responsesBox.innerHTML = `
-      <div class="card">
-        <p>
-          Please sign in to see your service requests.
-        </p>
-      </div>
-    `;
-
-    return;
-  }
-
-
-  const {
-    data: jobs,
-    error: jobsError
-  } = await supabase
-    .from("service_requests")
-    .select("*")
-    .eq(
-      "customer_id",
-      user.id
-    )
-    .order(
-      "id",
-      {
-        ascending: false
-      }
-    );
-
-
-  if (jobsError) {
-
-    console.error(
-      "Customer jobs loading error:",
-      jobsError
-    );
-
-    responsesBox.innerHTML = `
-      <div class="card">
-        <p>
-          Unable to load your service requests.
-        </p>
-
-        <small>
-          ${escapeHtml(
-            databaseErrorText(jobsError)
-          )}
-        </small>
-      </div>
-    `;
-
-    return;
-  }
-
-
-  if (
-    !jobs ||
-    !jobs.length
-  ) {
-
-    responsesBox.innerHTML = `
-      <div class="card">
-        <p>
-          You have not posted a service request yet.
-        </p>
-      </div>
-    `;
-
-    return;
-  }
-
-
-  let html = `
-    <h3>
-      Your Service Requests
-    </h3>
-  `;
-
-
-  for (
-    const job of jobs
-  ) {
-
-    const {
-      data: responses,
-      error: responsesError
-    } = await supabase
-      .from("service_responses")
-      .select("*")
-      .eq(
-        "request_id",
-        job.id
-      )
-      .order(
-        "id",
-        {
-          ascending: false
-        }
-      );
-
-
-    if (responsesError) {
-
-      console.error(
-        "Customer response loading error:",
-        responsesError
-      );
-    }
-
-
-    const jobStatus =
-      job.status ||
-      "posted";
-
-
-    const amount =
-      Number(
-        job.job_amount || 0
-      );
-
-
-    html += `
-      <div class="card">
-
-        <h3>
-          ${escapeHtml(
-            job.service_type ||
-            "Service"
-          )}
-        </h3>
-
-        <p>
-          <strong>
-            Description:
-          </strong>
-
-          ${escapeHtml(
-            job.description ||
-            ""
-          )}
-        </p>
-
-        <p>
-          <strong>
-            Location:
-          </strong>
-
-          ${escapeHtml(
-            job.location ||
-            ""
-          )}
-        </p>
-
-        <p>
-          <strong>
-            Job Amount:
-          </strong>
-
-          R${amount.toFixed(2)}
-        </p>
-
-        <p>
-          <strong>
-            Job status:
-          </strong>
-
-          ${escapeHtml(
-            jobStatus
-          )}
-        </p>
-    `;
-
-
-    if (
-      !responses ||
-      !responses.length
-    ) {
-
-      if (
-        jobStatus === "posted" &&
-        job.is_active !== false
-      ) {
-
-        html += `
-          <div class="card">
-
-            <p>
-              <strong>
-                Waiting for providers to respond.
-              </strong>
-            </p>
-
-          </div>
-        `;
-      }
-
-      else if (
-        jobStatus === "completed"
-      ) {
-
-        html += `
-          <div class="card">
-
-            <p>
-              <strong>
-                This job has been completed.
-              </strong>
-            </p>
-
-          </div>
-        `;
-      }
-
-      html += `
-        </div>
-      `;
-
-      continue;
-    }
-
-
-    html += `
-      <div class="card">
-
-        <h4>
-          Provider Responses
-        </h4>
-    `;
-
-
-    for (
-      const response of responses
-    ) {
-
-      const providerText =
-        response.provider_name ||
-        "Provider";
-
-
-      const providerServiceText =
-        response.provider_service ||
-        job.service_type ||
-        "";
-
-
-      const providerAreaText =
-        response.provider_location ||
-        "";
-
-
-      const responseStatus =
-        response.status ||
-        "pending";
-
-
-      let actionHtml = "";
-
-
-      if (
-        responseStatus === "pending" &&
-        jobStatus === "posted" &&
-        job.is_active !== false
-      ) {
-
-        actionHtml = `
-          <div>
-
-            <button
-              type="button"
-              class="accept-provider-btn"
-              data-response-id="${escapeHtml(
-                response.id
-              )}"
-              data-request-id="${escapeHtml(
-                job.id
-              )}"
-            >
-              Accept Provider
-            </button>
-
-            <button
-              type="button"
-              class="reject-provider-btn outline"
-              data-response-id="${escapeHtml(
-                response.id
-              )}"
-              data-request-id="${escapeHtml(
-                job.id
-              )}"
-            >
-              Reject
-            </button>
-
-          </div>
-        `;
-      }
-
-
-      html += `
-        <div class="card">
-
-          <h4>
-            ${escapeHtml(
-              providerText
-            )}
-          </h4>
-
-          <p>
-            <strong>
-              Service:
-            </strong>
-
-            ${escapeHtml(
-              providerServiceText
-            )}
-          </p>
-
-          <p>
-            <strong>
-              Provider area:
-            </strong>
-
-            ${escapeHtml(
-              providerAreaText
-            )}
-          </p>
-
-          <p>
-            <strong>
-              Response status:
-            </strong>
-
-            ${escapeHtml(
-              responseStatus
-            )}
-          </p>
-
-          ${actionHtml}
-
-        </div>
-      `;
-    }
-
-
-    html += `
-      </div>
-    `;
-
-
-    html += `
-      </div>
-    `;
-  }
-
-
-  responsesBox.innerHTML =
-    html;
-
-
-  // ====================================================
-  // ACCEPT PROVIDER
-  // ====================================================
-
-  document
-    .querySelectorAll(
-      ".accept-provider-btn"
-    )
-    .forEach(button => {
-
-      button.addEventListener(
-        "click",
-        async () => {
-
-          const responseId =
-            button.dataset.responseId;
-
-          const requestId =
-            button.dataset.requestId;
-
-
-          button.disabled = true;
-
-
-          const {
-            data: {
-              user
-            }
-          } = await supabase.auth.getUser();
-
-
-          if (!user) {
-
-            alert(
-              "Please sign in again."
-            );
-
-            button.disabled = false;
-
-            return;
-          }
-
-
-          // ----------------------------------------------
-          // Verify the provider response belongs to this
-          // customer's request.
-          // ----------------------------------------------
-
-          const {
-            data: selectedResponse,
-            error: responseError
-          } = await supabase
-            .from("service_responses")
-            .select("*")
-            .eq(
-              "id",
-              responseId
-            )
-            .eq(
-              "request_id",
-              requestId
-            )
-            .maybeSingle();
-
-
-          if (
-            responseError ||
-            !selectedResponse
-          ) {
-
-            console.error(
-              "Provider response lookup error:",
-              responseError
-            );
-
-            alert(
-              "Unable to find this provider response.\n\n" +
-              databaseErrorText(responseError)
-            );
-
-            button.disabled =
-              false;
-
-            return;
-          }
-
-
-          // ----------------------------------------------
-          // Make sure this customer owns the job.
-          // ----------------------------------------------
-
-          const {
-            data: customerJob,
-            error: customerJobError
-          } = await supabase
-            .from("service_requests")
-            .select("*")
-            .eq(
-              "id",
-              requestId
-            )
-            .eq(
-              "customer_id",
-              user.id
-            )
-            .maybeSingle();
-
-
-          if (
-            customerJobError ||
-            !customerJob
-          ) {
-
-            console.error(
-              "Customer job ownership error:",
-              customerJobError
-            );
-
-            alert(
-              "This service request could not be verified."
-            );
-
-            button.disabled =
-              false;
-
-            return;
-          }
-
-
-          // ----------------------------------------------
-          // Accept selected provider.
-          // ----------------------------------------------
-
-          const {
-            error: acceptError
-          } = await supabase
-            .from("service_responses")
-            .update({
-              status: "accepted"
-            })
-            .eq(
-              "id",
-              responseId
-            )
-            .eq(
-              "request_id",
-              requestId
-            );
-
-
-          if (acceptError) {
-
-            console.error(
-              "Accept provider error:",
-              acceptError
-            );
-
-            alert(
-              "Unable to accept provider.\n\n" +
-              databaseErrorText(acceptError)
-            );
-
-            button.disabled =
-              false;
-
-            return;
-          }
-
-
-          // ----------------------------------------------
-          // Reject all other pending providers.
-          // ----------------------------------------------
-
-          const {
-            error: rejectOthersError
-          } = await supabase
-            .from("service_responses")
-            .update({
-              status: "rejected"
-            })
-            .eq(
-              "request_id",
-              requestId
-            )
-            .eq(
-              "status",
-              "pending"
-            )
-            .neq(
-              "id",
-              responseId
-            );
-
-
-          if (rejectOthersError) {
-
-            console.error(
-              "Other provider rejection error:",
-              rejectOthersError
-            );
-
-            // We don't stop here because the selected
-            // provider has already been accepted.
-          }
-
-
-          // ----------------------------------------------
-          // Update the actual customer's job.
-          // ----------------------------------------------
-
-          const {
-            error: jobAcceptError
-          } = await supabase
-            .from("service_requests")
-            .update({
-              status: "accepted",
-              is_active: false
-            })
-            .eq(
-              "id",
-              requestId
-            )
-            .eq(
-              "customer_id",
-              user.id
-            );
-
-
-          if (jobAcceptError) {
-
-            console.error(
-              "Job accept error:",
-              jobAcceptError
-            );
-
-            alert(
-              "Provider was accepted, but the job status could not be updated.\n\n" +
-              databaseErrorText(jobAcceptError)
-            );
-
-            button.disabled =
-              false;
-
-            return;
-          }
-
-
-          alert(
-            "Provider accepted successfully!"
-          );
-
-
-          await loadCustomerResponses();
-
-          await loadCustomerHistory();
-
-          await loadNotifications();
-        }
-      );
+  if (data?.user) {
+    await supabase.from("profiles").upsert({
+      id: data.user.id,
+      role: "customer",
     });
+  }
 
+  if (status) status.textContent = "Signed in successfully.";
 
-  // ====================================================
-  // REJECT PROVIDER
-  // ====================================================
-
-  document
-    .querySelectorAll(
-      ".reject-provider-btn"
-    )
-    .forEach(button => {
-
-      button.addEventListener(
-        "click",
-        async () => {
-
-          const responseId =
-            button.dataset.responseId;
-
-
-          button.disabled =
-            true;
-
-
-          const {
-            error
-          } = await supabase
-            .from("service_responses")
-            .update({
-              status: "rejected"
-            })
-            .eq(
-              "id",
-              responseId
-            );
-
-
-          if (error) {
-
-            console.error(
-              "Reject provider error:",
-              error
-            );
-
-            alert(
-              "Unable to reject provider.\n\n" +
-              databaseErrorText(error)
-            );
-
-            button.disabled =
-              false;
-
-            return;
-          }
-
-
-          await loadCustomerResponses();
-
-          await loadCustomerHistory();
-
-          await loadNotifications();
-        }
-      );
-    });
+  hideAuthBox();
+  await updateAccountButton(data?.user);
+  await refreshAllScreens();
 }
 
-
-// ======================================================
-// CUSTOMER SUBMIT REQUEST
-// ======================================================
-
-submitRequest?.addEventListener(
-  "click",
-  async () => {
-
-    const description =
-      document.getElementById(
-        "description"
-      )?.value.trim();
-
-    const location =
-      document.getElementById(
-        "location"
-      )?.value.trim();
-
-    const amount =
-      jobAmount?.value.trim();
-
-    const service =
-      selectedService ||
-      requestBox?.dataset.service;
-
-
-    if (!service) {
-
-      alert(
-        "Please select a service first."
-      );
-
-      return;
-    }
-
-
-    if (
-      !description ||
-      !location ||
-      !amount
-    ) {
-
-      alert(
-        "Please enter the job description, location and job amount."
-      );
-
-      return;
-    }
-
-
-    const amountNumber =
-      Number(amount);
-
-
-    if (
-      !Number.isFinite(amountNumber) ||
-      amountNumber < 0
-    ) {
-
-      alert(
-        "Please enter a valid job amount."
-      );
-
-      return;
-    }
-
-
-    const {
-      data: {
-        user
-      }
-    } = await supabase.auth.getUser();
-
-
-    if (!user) {
-
-      alert(
-        "Please sign in before posting a service request."
-      );
-
-      showAuthBox();
-
-      return;
-    }
-
-
-    const profile =
-      await ensureCustomerProfile(
-        user
-      );
-
-
-    if (!profile) {
-
-      alert(
-        "Your account profile could not be verified. Please sign in again."
-      );
-
-      return;
-    }
-
-
-    // ==================================================
-    // POST CUSTOMER JOB
-    // ==================================================
-
-    const {
-      data: request,
-      error
-    } = await supabase
-      .from("service_requests")
-      .insert({
-        customer_id: user.id,
-        service_type: service,
-        description,
-        location,
-        job_amount: amountNumber,
-        status: "posted",
-        is_active: true
-      })
-      .select()
-      .single();
-
-
-    if (error) {
-
-      console.error(
-        "Request insert error:",
-        error
-      );
-
-
-      const errorText =
-        databaseErrorText(error);
-
-
-      const requestStatus =
-        document.getElementById(
-          "requestStatus"
-        );
-
-
-      if (requestStatus) {
-
-        requestStatus.textContent =
-          "Unable to post your service request. " +
-          errorText;
-      }
-
-
-      // IMPORTANT:
-      // We now show the real Supabase error.
-      alert(
-        "Unable to post your service request.\n\n" +
-        "Database error:\n" +
-        errorText
-      );
-
-      return;
-    }
-
-
-    if (requestBox) {
-
-      requestBox.dataset.requestId =
-        request.id;
-    }
-
-
-    saveCustomerRequestId(
-      request.id
-    );
-
-
-    const requestStatus =
-      document.getElementById(
-        "requestStatus"
-      );
-
-
-    if (requestStatus) {
-
-      requestStatus.textContent =
-        "Your service request has been posted successfully.";
-    }
-
-
-    const descriptionInput =
-      document.getElementById(
-        "description"
-      );
-
-    const locationInput =
-      document.getElementById(
-        "location"
-      );
-
-
-    if (descriptionInput) {
-      descriptionInput.value = "";
-    }
-
-    if (locationInput) {
-      locationInput.value = "";
-    }
-
-    if (jobAmount) {
-      jobAmount.value = "";
-    }
-
-
-    await loadCustomerResponses();
-    await loadCustomerHistory();
-    await loadLocalServiceProviders();
-    await loadNotifications();
-  }
-);
-
-
-// ======================================================
-// CUSTOMER JOB HISTORY
-// ======================================================
-
-async function loadCustomerHistory() {
-
-  if (!historyList) {
-    return;
-  }
-
-
-  const {
-    data: {
-      user
-    }
-  } = await supabase.auth.getUser();
-
+$("loginBtn")?.addEventListener("click", async () => {
+  const user = await currentUser();
 
   if (!user) {
-
-    historyList.innerHTML = `
-      <p>
-        Please sign in to see your job history.
-      </p>
-    `;
-
+    showAuthBox("signin");
+    $("authEmail")?.focus();
     return;
   }
 
+  const confirmed = window.confirm(
+    "You are signed in.\n\nPress OK to sign out."
+  );
 
-  const {
-    data: jobs,
-    error
-  } = await supabase
-    .from("service_requests")
-    .select("*")
-    .eq(
-      "customer_id",
-      user.id
-    )
-    .eq(
-      "status",
-      "completed"
-    )
-    .order("id", {
-      ascending: false
-    });
+  if (!confirmed) return;
 
+  const { error } = await supabase.auth.signOut();
 
   if (error) {
-
-    console.error(
-      "Customer history error:",
-      error
-    );
-
-    showEmptyHistory();
-
+    alert(errorText(error));
     return;
   }
 
+  await updateAccountButton(null);
+  hideAuthBox();
 
-  if (
-    !jobs ||
-    !jobs.length
-  ) {
+  if ($("authStatus")) {
+    $("authStatus").textContent = "Signed out.";
+  }
 
-    showEmptyHistory();
+  alert("You have been signed out.");
+});
 
+$("authSubmit")?.addEventListener("click", handleAuthSubmit);
+
+$("switchAuth")?.addEventListener("click", () => {
+  showAuthBox(authMode === "signup" ? "signin" : "signup");
+});
+
+$("closeAuth")?.addEventListener("click", hideAuthBox);
+
+supabase.auth.onAuthStateChange((_event, session) => {
+  setTimeout(async () => {
+    await updateAccountButton(session?.user || null);
+    await refreshAllScreens();
+  }, 250);
+});
+
+/* =========================================================
+   CUSTOMER / PROVIDER MODE
+   ========================================================= */
+
+customerBtn?.addEventListener("click", async () => {
+  services?.classList.remove("hidden");
+  provider?.classList.add("hidden");
+  providerJobs?.classList.add("hidden");
+
+  services?.scrollIntoView({ behavior: "smooth" });
+
+  ensureCustomerPaymentUI();
+  await loadCustomerDashboard();
+});
+
+providerBtn?.addEventListener("click", async () => {
+  const user = await currentUser();
+
+  if (!user) {
+    showAuthBox("signin");
     return;
   }
 
+  services?.classList.add("hidden");
+  provider?.classList.remove("hidden");
+  providerJobs?.classList.remove("hidden");
 
-  let html = "";
+  provider?.scrollIntoView({ behavior: "smooth" });
 
+  await loadProviderDashboard();
+});
 
-  for (
-    const job of jobs
-  ) {
+/* =========================================================
+   ESTIMATES
+   ========================================================= */
 
-    const providerText =
-      await getProviderForJob(
-        job.id
-      );
+function calculateEstimate(service, description = "") {
+  let [low, high] =
+    SERVICE_RANGES[service] || SERVICE_RANGES.Other;
 
+  const text = description.toLowerCase();
 
-    html += `
-      <div class="card">
+  const highComplexity = [
+    "replace",
+    "replacement",
+    "installation",
+    "install",
+    "rewire",
+    "burst",
+    "geyser",
+    "roof",
+    "large",
+    "whole house",
+    "multiple",
+    "emergency",
+    "urgent",
+  ];
 
-        <h3>
-          ${escapeHtml(
-            job.service_type
-          )}
-        </h3>
+  const mediumComplexity = [
+    "repair",
+    "broken",
+    "not working",
+    "blocked",
+    "damaged",
+    "fix",
+    "fault",
+    "leak",
+    "deep clean",
+  ];
 
-        <p>
-          <strong>
-            Provider:
-          </strong>
-
-          ${escapeHtml(
-            providerText
-          )}
-        </p>
-
-        <p>
-          <strong>
-            Location:
-          </strong>
-
-          ${escapeHtml(
-            job.location
-          )}
-        </p>
-
-        <p>
-          <strong>
-            Job Amount:
-          </strong>
-
-          R${Number(
-            job.job_amount || 0
-          ).toFixed(2)}
-        </p>
-
-        <p>
-          <strong>
-            Status:
-          </strong>
-
-          Completed
-        </p>
-
-        <div class="card">
-
-          <p>
-            <strong>
-              Payment
-            </strong>
-          </p>
-
-          <p>
-            Your job is completed. You can now pay securely through Paystack.
-          </p>
-
-          <button
-            type="button"
-            class="pay-now-btn"
-            data-request-id="${escapeHtml(
-              job.id
-            )}"
-          >
-            Pay Now
-          </button>
-
-          <p
-            class="payment-status"
-            data-payment-status="${escapeHtml(
-              job.id
-            )}"
-          ></p>
-
-        </div>
-
-        <p>
-          <strong>
-            Date:
-          </strong>
-
-          ${formatDate(
-            job.created_at
-          )}
-        </p>
-
-        <div
-          id="rating-${escapeHtml(
-            job.id
-          )}"
-        >
-          Loading rating...
-        </div>
-
-      </div>
-    `;
+  if (highComplexity.some((word) => text.includes(word))) {
+    low += 100;
+    high += 350;
+  } else if (mediumComplexity.some((word) => text.includes(word))) {
+    low += 50;
+    high += 180;
   }
 
-
-  historyList.innerHTML =
-    html;
-
-
-  // ====================================================
-  // REAL PAYSTACK PAYMENT
-  // ====================================================
-
-  document
-    .querySelectorAll(
-      ".pay-now-btn"
-    )
-    .forEach(button => {
-
-      button.addEventListener(
-        "click",
-        async () => {
-
-          const requestId =
-            button.dataset.requestId;
-
-
-          if (!requestId) {
-
-            alert(
-              "Payment request could not be identified."
-            );
-
-            return;
-          }
-
-
-          const statusBox =
-            document.querySelector(
-              `[data-payment-status="${CSS.escape(
-                requestId
-              )}"]`
-            );
-
-
-          button.disabled =
-            true;
-
-          button.textContent =
-            "Preparing payment...";
-
-
-          if (statusBox) {
-
-            statusBox.textContent =
-              "Connecting to Paystack...";
-          }
-
-
-          try {
-
-            const {
-              data,
-              error
-            } =
-              await supabase.functions.invoke(
-                "create-paystack-payment",
-                {
-                  body: {
-                    request_id:
-                      requestId
-                  }
-                }
-              );
-
-
-            if (error) {
-
-              console.error(
-                "Paystack function error:",
-                error
-              );
-
-
-              if (statusBox) {
-
-                statusBox.textContent =
-                  "Payment could not be started.";
-              }
-
-
-              alert(
-                "Unable to start payment.\n\n" +
-                error.message
-              );
-
-
-              button.disabled =
-                false;
-
-              button.textContent =
-                "Pay Now";
-
-              return;
-            }
-
-
-            if (
-              !data ||
-              !data.success ||
-              !data.authorization_url
-            ) {
-
-              console.error(
-                "Paystack response:",
-                data
-              );
-
-
-              if (statusBox) {
-
-                statusBox.textContent =
-                  "Payment could not be created.";
-              }
-
-
-              alert(
-                data?.error ||
-                "Unable to create Paystack payment."
-              );
-
-
-              button.disabled =
-                false;
-
-              button.textContent =
-                "Pay Now";
-
-              return;
-            }
-
-
-            if (statusBox) {
-
-              statusBox.textContent =
-                "Redirecting to secure Paystack checkout...";
-            }
-
-
-            window.location.href =
-              data.authorization_url;
-
-          } catch (error) {
-
-            console.error(
-              "Payment error:",
-              error
-            );
-
-
-            if (statusBox) {
-
-              statusBox.textContent =
-                "Something went wrong while starting the payment.";
-            }
-
-
-            alert(
-              "Something went wrong while starting the payment."
-            );
-
-
-            button.disabled =
-              false;
-
-            button.textContent =
-              "Pay Now";
-          }
-        }
-      );
-    });
-
-
-  // ====================================================
-  // LOAD CUSTOMER RATINGS
-  // ====================================================
-
-  for (
-    const job of jobs
-  ) {
-
-    const providerText =
-      await getProviderForJob(
-        job.id
-      );
-
-    await loadCustomerRating(
-      job.id,
-      providerText
-    );
-  }
+  return {
+    min: round2(low),
+    max: round2(high),
+    midpoint: round2((low + high) / 2),
+  };
 }
 
-
-// ======================================================
-// EMPTY HISTORY
-// ======================================================
-
-function showEmptyHistory() {
-
-  if (!historyList) {
-    return;
-  }
-
-  historyList.innerHTML = `
-    <div class="card">
-      <p>
-        No completed jobs yet.
-      </p>
-    </div>
-  `;
-}
-
-
-// ======================================================
-// CUSTOMER RATING
-// ======================================================
-
-async function loadCustomerRating(
-  requestId,
-  providerNameValue
-) {
-
-  const box =
-    document.getElementById(
-      `rating-${requestId}`
-    );
-
-
-  if (!box) {
-    return;
-  }
-
-
-  const {
-    data: existingReview
-  } = await supabase
-    .from("service_reviews")
-    .select("*")
-    .eq(
-      "request_id",
-      requestId
-    )
-    .maybeSingle();
-
-
-  if (existingReview) {
-
-    box.innerHTML = `
-      <hr>
-
-      <p>
-        <strong>
-          Your rating:
-        </strong>
-
-        ${stars(
-          existingReview.rating
-        )}
-      </p>
-
-      <p>
-        ${escapeHtml(
-          existingReview.review ||
-          "No written review."
-        )}
-      </p>
-    `;
-
-    return;
-  }
-
-
-  box.innerHTML = `
-    <hr>
-
-    <p>
-      <strong>
-        Rate this provider
-      </strong>
-    </p>
-
-    <div class="rating-buttons">
-
-      ${[1,2,3,4,5].map(number => `
-        <button
-          type="button"
-          class="rating-star-btn outline"
-          data-rating="${number}"
-        >
-          ${number} 
-        </button>
-      `).join("")}
-
-    </div>
-
-    <textarea
-      class="customer-review-text"
-      placeholder="Write a review (optional)"
-    ></textarea>
-
-    <button
-      type="button"
-      class="submit-review-btn"
-    >
-      Submit Review
-    </button>
-
-    <p class="review-status"></p>
-  `;
-
-
-  let selectedRating = 0;
-
-
-  box
-    .querySelectorAll(
-      ".rating-star-btn"
-    )
-    .forEach(button => {
-
-      button.addEventListener(
-        "click",
-        () => {
-
-          selectedRating =
-            Number(
-              button.dataset.rating
-            );
-
-
-          box
-            .querySelectorAll(
-              ".rating-star-btn"
-            )
-            .forEach(item => {
-
-              item.classList.remove(
-                "selected"
-              );
-            });
-
-
-          button.classList.add(
-            "selected"
-          );
-        }
-      );
-    });
-
-
-  const submitReviewButton =
-    box.querySelector(
-      ".submit-review-btn"
-    );
-
-
-  submitReviewButton?.addEventListener(
-    "click",
-    async () => {
-
-      const status =
-        box.querySelector(
-          ".review-status"
-        );
-
-
-      const reviewText =
-        box.querySelector(
-          ".customer-review-text"
-        )?.value.trim();
-
-
-      if (!selectedRating) {
-
-        if (status) {
-
-          status.textContent =
-            "Please select a rating.";
-        }
-
-        return;
-      }
-
-
-      const {
-        data: {
-          user
-        }
-      } = await supabase.auth.getUser();
-
-
-      if (!user) {
-
-        if (status) {
-
-          status.textContent =
-            "Please sign in again.";
-        }
-
-        return;
-      }
-
-
-      submitReviewButton.disabled =
-        true;
-
-
-      const {
-        error
-      } = await supabase
-        .from("service_reviews")
-        .insert({
-          request_id:
-            requestId,
-
-          provider_name:
-            providerNameValue,
-
-          rating:
-            selectedRating,
-
-          review:
-            reviewText
-        });
-
-
-      if (error) {
-
-        console.error(
-          "Review error:",
-          error
-        );
-
-        if (status) {
-
-          status.textContent =
-            "Unable to submit review.\n" +
-            databaseErrorText(error);
-        }
-
-        submitReviewButton.disabled =
-          false;
-
-        return;
-      }
-
-
-      if (status) {
-
-        status.textContent =
-          "Thank you! Your review was submitted.";
-      }
-
-
-      await loadCustomerHistory();
-      await loadLocalServiceProviders();
-      await loadProviderReviews();
-      await loadNotifications();
+function ensureCustomerPaymentUI() {
+  if (!requestBox) return;
+
+  let estimateBox = $("mafEstimateBox");
+
+  if (!estimateBox) {
+    estimateBox = document.createElement("div");
+    estimateBox.id = "mafEstimateBox";
+    estimateBox.className = "card";
+    estimateBox.style.marginTop = "15px";
+
+    const submit = $("submitRequest");
+
+    if (submit) {
+      submit.parentElement?.insertBefore(estimateBox, submit);
+    } else {
+      requestBox.appendChild(estimateBox);
     }
+  }
+
+  let paymentBox = $("mafPaymentChoice");
+
+  if (!paymentBox) {
+    paymentBox = document.createElement("div");
+    paymentBox.id = "mafPaymentChoice";
+    paymentBox.className = "card";
+    paymentBox.style.marginTop = "15px";
+
+    paymentBox.innerHTML = `
+      <h3>Payment preference</h3>
+
+      <p>
+        Choose how you expect to pay after the job is completed.
+      </p>
+
+      <label>
+        <input
+          type="radio"
+          name="mafPaymentMethod"
+          value="cash"
+          checked
+        >
+         Pay Cash
+      </label>
+
+      <br>
+
+      <label>
+        <input
+          type="radio"
+          name="mafPaymentMethod"
+          value="online"
+        >
+         Pay Online through Paystack
+      </label>
+
+      <p>
+        The provider must propose the final price and you must
+        approve it before the provider starts the job.
+      </p>
+    `;
+
+    const description = $("description");
+    const location = $("location");
+
+    (location || description || requestBox)
+      .insertAdjacentElement("afterend", paymentBox);
+  }
+}
+
+function selectedPaymentMethod() {
+  return (
+    document.querySelector(
+      'input[name="mafPaymentMethod"]:checked'
+    )?.value || "cash"
   );
 }
 
+function refreshEstimate() {
+  ensureCustomerPaymentUI();
 
-// ======================================================
-// PROVIDER REGISTRATION
-// ======================================================
+  const service = requestBox?.dataset.service;
+  const description = $("description")?.value.trim() || "";
+  const box = $("mafEstimateBox");
 
-saveProvider?.addEventListener(
-  "click",
-  async () => {
+  if (!service || !box) return;
 
-    const name =
-      providerName?.value.trim();
+  const estimate = calculateEstimate(service, description);
 
-    const service =
-      providerService?.value.trim();
+  if ($("jobAmount")) {
+    $("jobAmount").value = estimate.midpoint;
+    $("jobAmount").style.display = "none";
+  }
 
-    const area =
-      providerArea?.value.trim();
+  box.innerHTML = `
+    <h3>MR AWAY FIX Estimated Cost</h3>
 
-    const phoneInput =
-      ensureProviderPhoneInput();
+    <p>
+      <strong>${escapeHtml(service)}</strong>
+    </p>
 
-    const phone =
-      phoneInput?.value.trim() || "";
+    <p style="font-size:1.3rem;font-weight:800;">
+      ${money(estimate.min)} – ${money(estimate.max)}
+    </p>
 
+    <p>
+      This is an estimate based on the service and job description.
+      The provider will propose the final price after assessing the job.
+    </p>
 
-    if (
-      !name ||
-      !service ||
-      !area ||
-      !phone
-    ) {
+    <p>
+      <strong>Final price changes require your approval.</strong>
+    </p>
+  `;
+}
 
-      if (providerStatus) {
+/* =========================================================
+   SERVICE SELECTION
+   ========================================================= */
 
-        providerStatus.textContent =
-          "Please complete all provider details, including your phone number.";
-      }
+document.querySelectorAll("[data-service]").forEach((button) => {
+  button.addEventListener("click", () => {
+    const service = button.dataset.service;
 
-      return;
+    requestBox?.classList.remove("hidden");
+
+    if ($("selectedService")) {
+      $("selectedService").textContent =
+        "Request: " + service;
     }
 
-
-    const {
-      data: {
-        user
-      }
-    } = await supabase.auth.getUser();
-
-
-    if (!user) {
-
-      if (providerStatus) {
-
-        providerStatus.textContent =
-          "Please sign in before registering as a provider.";
-      }
-
-      showAuthBox();
-
-      return;
+    if (requestBox) {
+      requestBox.dataset.service = service;
+      delete requestBox.dataset.requestId;
     }
 
+    ensureCustomerPaymentUI();
+    refreshEstimate();
 
-    const {
-      error
-    } = await supabase
+    requestBox?.scrollIntoView({ behavior: "smooth" });
+  });
+});
+
+$("description")?.addEventListener("input", refreshEstimate);
+
+/* =========================================================
+   POST CUSTOMER REQUEST
+   ========================================================= */
+
+$("submitRequest")?.addEventListener("click", async () => {
+  const user = await currentUser();
+
+  if (!user) {
+    showAuthBox("signin");
+    return;
+  }
+
+  const service = requestBox?.dataset.service;
+  const description = $("description")?.value.trim();
+  const location = $("location")?.value.trim();
+  const status = $("requestStatus") || $("status");
+
+  if (!service) {
+    if (status) status.textContent = "Please choose a service.";
+    return;
+  }
+
+  if (!description) {
+    if (status) status.textContent = "Please describe the job.";
+    return;
+  }
+
+  if (!location) {
+    if (status) status.textContent = "Please enter your area.";
+    return;
+  }
+
+  const estimate = calculateEstimate(service, description);
+  const paymentMethod = selectedPaymentMethod();
+
+  if (status) status.textContent = "Posting your request...";
+
+  const { data, error } = await supabase
+    .from("service_requests")
+    .insert({
+      customer_id: user.id,
+      service_type: service,
+      description,
+      location,
+      status: "posted",
+      is_active: true,
+      job_amount: estimate.midpoint,
+      estimate_min: estimate.min,
+      estimate_max: estimate.max,
+      final_amount: null,
+      final_amount_status: "estimate",
+      payment_method: paymentMethod,
+    })
+    .select("id")
+    .single();
+
+  if (error) {
+    if (status) {
+      status.textContent =
+        "Could not post request: " + errorText(error);
+    }
+    return;
+  }
+
+  requestBox.dataset.requestId = data.id;
+
+  const ids = JSON.parse(
+    localStorage.getItem("mrAwayFixCustomerRequests") || "[]"
+  );
+
+  localStorage.setItem(
+    "mrAwayFixCustomerRequests",
+    JSON.stringify([...new Set([...ids, data.id])])
+  );
+
+  if (status) {
+    status.textContent =
+      `Request posted successfully. Estimate: ${money(estimate.min)} – ${money(estimate.max)}.`;
+  }
+
+  $("description").value = "";
+  $("location").value = "";
+
+  alert(
+    `Service request posted successfully!\n\n` +
+    `Estimate: ${money(estimate.min)} – ${money(estimate.max)}\n` +
+    `Payment preference: ${
+      paymentMethod === "cash" ? "Cash" : "Online"
+    }`
+  );
+
+  await loadCustomerDashboard();
+});
+
+/* =========================================================
+   PROVIDER REGISTRATION
+   ========================================================= */
+
+$("saveProvider")?.addEventListener("click", async () => {
+  const user = await currentUser();
+
+  if (!user) {
+    showAuthBox("signin");
+    return;
+  }
+
+  const name = $("providerName")?.value.trim();
+  const service = $("providerService")?.value.trim();
+  const area = $("providerArea")?.value.trim();
+  const status = $("providerStatus");
+
+  if (!name || !service || !area) {
+    if (status) {
+      status.textContent =
+        "Please enter your name/business, service and area.";
+    }
+    return;
+  }
+
+  if (status) status.textContent = "Saving provider...";
+
+  const { data: existing } = await supabase
+    .from("service_providers")
+    .select("id")
+    .eq("user_id", user.id)
+    .limit(1)
+    .maybeSingle();
+
+  let result;
+
+  if (existing?.id) {
+    result = await supabase
+      .from("service_providers")
+      .update({
+        business_name: name,
+        service_type: service,
+        location: area,
+        available: true,
+      })
+      .eq("id", existing.id);
+  } else {
+    result = await supabase
       .from("service_providers")
       .insert({
         user_id: user.id,
         business_name: name,
         service_type: service,
         location: area,
-        phone: phone
+        available: true,
+        verified: false,
       });
-
-
-    if (error) {
-
-      console.error(
-        "Provider registration error:",
-        error
-      );
-
-      if (providerStatus) {
-
-        providerStatus.textContent =
-          "Unable to register provider: " +
-          databaseErrorText(error);
-      }
-
-      return;
-    }
-
-
-    if (providerStatus) {
-
-      providerStatus.textContent =
-        "Provider registered successfully with phone number.";
-    }
-
-
-    await loadLocalServiceProviders();
-    await loadJobs();
-    await loadProviderReviews();
-    await loadNotifications();
   }
-);
 
-
-// ======================================================
-// PROVIDER CUSTOMER REVIEW
-// ======================================================
-
-async function loadJobCustomerReview(
-  requestId
-) {
-
-  const reviewBox =
-    document.getElementById(
-      `job-review-${requestId}`
-    );
-
-
-  if (!reviewBox) {
+  if (result.error) {
+    if (status) {
+      status.textContent =
+        "Could not save provider: " +
+        errorText(result.error);
+    }
     return;
   }
 
+  await supabase.from("profiles").upsert({
+    id: user.id,
+    role: "provider",
+    full_name: name,
+  });
 
-  const {
-    data: review
-  } = await supabase
-    .from("service_reviews")
+  if (status) {
+    status.textContent =
+      "Provider profile saved successfully.";
+  }
+
+  await loadProviderDashboard();
+});
+
+/* =========================================================
+   PROVIDER WALLET
+   ========================================================= */
+
+async function loadProviderWallet(userId) {
+  const { data, error } = await supabase
+    .from("provider_wallets")
     .select("*")
-    .eq(
-      "request_id",
-      requestId
-    )
+    .eq("provider_user_id", userId)
     .maybeSingle();
 
-
-  if (!review) {
-
-    reviewBox.innerHTML = `
-      <p>
-        No customer review yet.
-      </p>
-    `;
-
-    return;
-  }
-
-
-  reviewBox.innerHTML = `
-    <div class="card">
-
-      <p>
-        <strong>
-          Customer rating:
-        </strong>
-
-        ${stars(
-          review.rating
-        )}
-      </p>
-
-      <p>
-        ${escapeHtml(
-          review.review ||
-          "No written review."
-        )}
-      </p>
-
-    </div>
-  `;
-}
-
-
-// ======================================================
-// PROVIDER REVIEWS
-// ======================================================
-
-async function loadProviderReviews() {
-
-  const reviewBox =
-    document.getElementById(
-      "providerReviews"
-    );
-
-
-  if (!reviewBox) {
-    return;
-  }
-
-
-  const name =
-    providerName?.value.trim();
-
-
-  if (!name) {
-
-    reviewBox.innerHTML =
-      `<p>Enter your provider name to see reviews.</p>`;
-
-    return;
-  }
-
-
-  const {
-    data: reviews,
-    error
-  } = await supabase
-    .from("service_reviews")
-    .select(
-      "rating, review"
-    )
-    .eq(
-      "provider_name",
-      name
-    )
-    .order("id", {
-      ascending: false
-    });
-
-
   if (error) {
-
-    console.error(error);
-
-    reviewBox.innerHTML =
-      `<p>Unable to load reviews.</p>`;
-
-    return;
+    console.error("Wallet error:", error);
   }
 
-
-  if (
-    !reviews ||
-    !reviews.length
-  ) {
-
-    reviewBox.innerHTML = `
-      <p>
-        No customer reviews yet.
-      </p>
-    `;
-
-    return;
-  }
-
-
-  const average =
-    reviews.reduce(
-      (sum, item) =>
-        sum +
-        Number(
-          item.rating || 0
-        ),
-      0
-    ) / reviews.length;
-
-
-  reviewBox.innerHTML = `
-    <div class="card">
-
-      <h3>
-        Your Rating
-      </h3>
-
-      <p>
-        <strong>
-          ${stars(average)}
-        </strong>
-
-        ${average.toFixed(1)}/5
-      </p>
-
-      <p>
-        ${reviews.length}
-        review${reviews.length === 1 ? "" : "s"}
-      </p>
-
-    </div>
-
-    <h3>
-      Customer Reviews
-    </h3>
-
-    ${reviews.map(review => `
-      <div class="card">
-
-        <p>
-          <strong>
-            ${stars(
-              review.rating
-            )}
-          </strong>
-        </p>
-
-        <p>
-          ${escapeHtml(
-            review.review ||
-            "No written review."
-          )}
-        </p>
-
-      </div>
-    `).join("")}
-  `;
+  return data || {
+    commission_owed: 0,
+    total_cash_collected: 0,
+    total_commission_paid: 0,
+    cash_debt_limit: 500,
+  };
 }
 
+/* =========================================================
+   PROVIDER JOB DASHBOARD
+   ========================================================= */
 
-// ======================================================
-// PROVIDER JOBS
-// ======================================================
+async function loadProviderDashboard() {
+  const jobsList = $("jobsList");
+  if (!jobsList) return;
 
-async function loadJobs() {
-
-  const jobsList =
-    document.getElementById(
-      "jobsList"
-    );
-
-
-  if (!jobsList) {
-    return;
-  }
-
-
-  const {
-    data: {
-      user
-    }
-  } = await supabase.auth.getUser();
-
+  const user = await currentUser();
 
   if (!user) {
-
-    jobsList.innerHTML = `
-      <p>
-        Please sign in to see provider jobs.
-      </p>
-    `;
-
+    jobsList.innerHTML =
+      "<p>Please sign in to use the provider dashboard.</p>";
     return;
   }
 
+  const providerName = $("providerName")?.value.trim() || "";
+  const providerService =
+    $("providerService")?.value.trim() || "";
+  const providerArea =
+    $("providerArea")?.value.trim() || "";
 
-  ensureProviderPhoneInput();
-
-
-  const name =
-    providerName?.value.trim();
-
-  const service =
-    providerService?.value.trim();
-
-  const area =
-    providerArea?.value.trim();
-
-
-  if (
-    !name ||
-    !service ||
-    !area
-  ) {
-
+  if (!providerName || !providerService || !providerArea) {
     jobsList.innerHTML = `
       <div class="card">
-
+        <h3>Provider registration</h3>
         <p>
-          Enter your provider name,
-          service and area to see
-          available jobs.
+          Enter your provider details above and press
+          <strong>Register Provider</strong>.
         </p>
-
       </div>
     `;
-
     return;
   }
 
+  jobsList.innerHTML = "<p>Loading provider dashboard...</p>";
 
-  // ====================================================
-  // AVAILABLE JOBS ONLY
-  // ====================================================
+  const wallet = await loadProviderWallet(user.id);
+  const owed = Number(wallet.commission_owed || 0);
+  const limit = Number(wallet.cash_debt_limit || 500);
+  const cashPaused = owed >= limit;
 
-  const {
-    data: jobs,
-    error
-  } = await supabase
-    .from("service_requests")
-    .select("*")
-    .eq(
-      "status",
-      "posted"
-    )
-    .eq(
-      "is_active",
-      true
-    )
-    .order("id", {
-      ascending: false
-    });
-
-
-  if (error) {
-
-    console.error(
-      "Jobs loading error:",
-      error
-    );
-
-    jobsList.innerHTML = `
-      <div class="card">
-
-        <p>
-          Unable to load available jobs.
-        </p>
-
-        <small>
-          ${escapeHtml(
-            databaseErrorText(error)
-          )}
-        </small>
-
-      </div>
-    `;
-
-    return;
-  }
-
-
-  // ====================================================
-  // EXISTING PROVIDER RESPONSES
-  //
-  // IMPORTANT FIX:
-  // Use provider_user_id instead of provider_name.
-  // ====================================================
-
-  const {
-    data: existingResponses,
-    error: responseLoadError
-  } = await supabase
-    .from("service_responses")
-    .select("*")
-    .eq(
-      "provider_user_id",
-      user.id
-    );
-
-
-  if (responseLoadError) {
-
-    console.error(
-      "Provider response loading error:",
-      responseLoadError
-    );
-
-    jobsList.innerHTML = `
-      <div class="card">
-
-        <p>
-          Unable to load your provider responses.
-        </p>
-
-        <small>
-          ${escapeHtml(
-            databaseErrorText(responseLoadError)
-          )}
-        </small>
-
-      </div>
-    `;
-
-    return;
-  }
-
-
-  const respondedIds =
-    new Set(
-      (existingResponses || [])
-        .map(response =>
-          String(
-            response.request_id
-          )
-        )
-    );
-
-
-  const availableJobs =
-    (jobs || []).filter(
-      job =>
-        !respondedIds.has(
-          String(job.id)
-        )
-    );
-
-
-  let html = `
-    <h3>
-      Available Jobs
-    </h3>
-  `;
-
-
-  if (
-    !availableJobs.length
-  ) {
-
-    html += `
-      <div class="card">
-
-        <p>
-          No new jobs available.
-        </p>
-
-      </div>
-    `;
-  }
-
-
-  for (
-    const job of availableJobs
-  ) {
-
-    html += `
-      <div class="card">
-
-        <h4>
-          ${escapeHtml(
-            job.service_type
-          )}
-        </h4>
-
-        <p>
-          <strong>
-            Description:
-          </strong>
-
-          ${escapeHtml(
-            job.description
-          )}
-        </p>
-
-        <p>
-          <strong>
-            Location:
-          </strong>
-
-          ${escapeHtml(
-            job.location
-          )}
-        </p>
-
-        <p>
-          <strong>
-            Job Amount:
-          </strong>
-
-          R${Number(
-            job.job_amount || 0
-          ).toFixed(2)}
-        </p>
-
-        <button
-          type="button"
-          class="want-job-btn"
-          data-request-id="${escapeHtml(
-            job.id
-          )}"
-        >
-          I want this job
-        </button>
-
-      </div>
-    `;
-  }
-
-
-  // ====================================================
-  // MY REQUESTED JOBS
-  // ====================================================
-
-  const myResponses =
-    existingResponses || [];
-
-
-  html += `
-    <h3>
-      My Requested Jobs
-    </h3>
-  `;
-
-
-  if (!myResponses.length) {
-
-    html += `
-      <div class="card">
-
-        <p>
-          You have not requested any jobs yet.
-        </p>
-
-      </div>
-    `;
-  }
-
-
-  for (
-    const response of myResponses
-  ) {
-
-    const {
-      data: job
-    } = await supabase
+  const { data: availableJobs, error: jobsError } =
+    await supabase
       .from("service_requests")
       .select("*")
-      .eq(
-        "id",
-        response.request_id
-      )
-      .maybeSingle();
+      .eq("status", "posted")
+      .eq("is_active", true)
+      .order("created_at", { ascending: false });
 
+  const { data: myResponses, error: responsesError } =
+    await supabase
+      .from("service_responses")
+      .select("*")
+      .eq("provider_user_id", user.id)
+      .order("created_at", { ascending: false });
+
+  if (responsesError) {
+    console.error("Provider response error:", responsesError);
+  }
+
+  const responses = myResponses || [];
+  const responseMap = {};
+
+  responses.forEach((response) => {
+    responseMap[response.request_id] = response;
+  });
+
+  let html = `
+    <div class="card">
+      <h2>Provider Wallet</h2>
+
+      <p>
+        <strong>Commission owed:</strong>
+        ${money(owed)}
+      </p>
+
+      <p>
+        <strong>Total cash collected:</strong>
+        ${money(wallet.total_cash_collected)}
+      </p>
+
+      <p>
+        <strong>Total commission paid:</strong>
+        ${money(wallet.total_commission_paid)}
+      </p>
+
+      <p>
+        <strong>Cash-job limit:</strong>
+        ${money(limit)}
+      </p>
+
+      ${
+        cashPaused
+          ? `
+            <div class="card">
+              <p>
+                 Cash jobs are temporarily paused because
+                your outstanding MR AWAY FIX commission has
+                reached the limit.
+              </p>
+
+              <button
+                type="button"
+                id="mafSettleCommission"
+              >
+                Pay Outstanding Commission
+              </button>
+            </div>
+          `
+          : owed > 0
+          ? `
+            <button
+              type="button"
+              id="mafSettleCommission"
+              class="outline"
+            >
+              Pay Commission Balance
+            </button>
+          `
+          : `
+            <p> No outstanding commission balance.</p>
+          `
+      }
+    </div>
+
+    <h2>Available Jobs</h2>
+  `;
+
+  if (jobsError) {
+    html += `
+      <div class="card">
+        <p>Could not load available jobs.</p>
+        <small>${escapeHtml(errorText(jobsError))}</small>
+      </div>
+    `;
+  } else {
+    const freshJobs = (availableJobs || []).filter(
+      (job) => !responseMap[job.id]
+    );
+
+    if (!freshJobs.length) {
+      html += `
+        <div class="card">
+          <p>No new jobs available right now.</p>
+        </div>
+      `;
+    }
+
+    freshJobs.forEach((job) => {
+      const cashJob = job.payment_method === "cash";
+
+      html += `
+        <div class="job-card">
+
+          <h3> ${escapeHtml(job.service_type)}</h3>
+
+          <p>
+            ${escapeHtml(job.description)}
+          </p>
+
+          <p>
+             ${escapeHtml(job.location)}
+          </p>
+
+          <p>
+            <strong>MR AWAY FIX estimate:</strong>
+            ${money(job.estimate_min || job.job_amount)}
+            –
+            ${money(job.estimate_max || job.job_amount)}
+          </p>
+
+          <p>
+            <strong>Payment:</strong>
+            ${cashJob ? " CASH" : " ONLINE"}
+          </p>
+
+          ${
+            cashJob && cashPaused
+              ? `
+                <p>
+                   Cash jobs are unavailable until your
+                  commission balance is settled.
+                </p>
+              `
+              : `
+                <button
+                  type="button"
+                  class="mafTakeJob"
+                  data-request-id="${escapeHtml(job.id)}"
+                >
+                  I want this job
+                </button>
+              `
+          }
+
+        </div>
+      `;
+    });
+  }
+
+  html += `
+    <h2 style="margin-top:30px;">
+      My Jobs
+    </h2>
+  `;
+
+  if (!responses.length) {
+    html += `
+      <div class="card">
+        <p>You have not requested any jobs yet.</p>
+      </div>
+    `;
+  }
+
+  for (const response of responses) {
+    const { data: job } = await supabase
+      .from("service_requests")
+      .select("*")
+      .eq("id", response.request_id)
+      .maybeSingle();
 
     if (!job) continue;
 
+    const { data: payment } = await supabase
+      .from("job_payments")
+      .select("*")
+      .eq("request_id", job.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-    const completed =
-      job.status ===
-      "completed";
+    const cashJob = job.payment_method === "cash";
 
-    const inProgress =
-      job.status ===
-      "in_progress";
+    html += `
+      <div class="job-card">
 
-    const accepted =
-      response.status ===
-      "accepted";
+        <h3> ${escapeHtml(job.service_type)}</h3>
 
+        <p>${escapeHtml(job.description)}</p>
 
-    let jobActions = "";
+        <p> ${escapeHtml(job.location)}</p>
 
+        <p>
+          <strong>Estimate:</strong>
+          ${money(job.estimate_min || job.job_amount)}
+          –
+          ${money(job.estimate_max || job.job_amount)}
+        </p>
+
+        ${
+          job.final_amount
+            ? `
+              <p>
+                <strong>Final amount:</strong>
+                ${money(job.final_amount)}
+              </p>
+            `
+            : ""
+        }
+
+        <p>
+          <strong>Payment:</strong>
+          ${cashJob ? " Cash" : " Online"}
+        </p>
+
+        <p>
+          <strong>Your response:</strong>
+          ${escapeHtml(response.status)}
+        </p>
+
+        <p>
+          <strong>Job status:</strong>
+          ${escapeHtml(job.status)}
+        </p>
+    `;
 
     if (
       response.status === "pending" &&
       job.status === "posted"
     ) {
-
-      jobActions = `
+      html += `
         <p>
-          <strong>
-            Waiting for customer response.
-          </strong>
+          Waiting for the customer to choose a provider.
         </p>
       `;
     }
-
 
     if (
-      accepted &&
+      response.status === "accepted" &&
       job.status === "accepted"
     ) {
+      if (job.final_amount_status === "customer_approved") {
+        html += `
+          <div class="card">
+            <p>
+              Customer approved final price:
+              <strong>${money(job.final_amount)}</strong>
+            </p>
 
-      jobActions = `
-        <button
-          type="button"
-          class="start-job-btn"
-          data-request-id="${escapeHtml(
-            job.id
-          )}"
-        >
-          Start Job
-        </button>
-      `;
+            <button
+              type="button"
+              class="mafStartJob"
+              data-request-id="${escapeHtml(job.id)}"
+            >
+              Start Job
+            </button>
+          </div>
+        `;
+      } else {
+        html += `
+          <div class="card">
+            <h4>Final Price</h4>
+
+            <p>
+              Enter the final amount after assessing the job.
+            </p>
+
+            <input
+              type="number"
+              min="1"
+              step="0.01"
+              class="mafFinalPrice"
+              data-request-id="${escapeHtml(job.id)}"
+              value="${escapeHtml(
+                job.final_amount ||
+                job.estimate_min ||
+                job.job_amount ||
+                ""
+              )}"
+            >
+
+            <button
+              type="button"
+              class="mafProposePrice"
+              data-request-id="${escapeHtml(job.id)}"
+            >
+              Send Final Price to Customer
+            </button>
+          </div>
+        `;
+      }
     }
 
-
-    if (inProgress) {
-
-      jobActions = `
-        <p>
-          <strong>
-            Job in progress.
-          </strong>
-        </p>
-
+    if (
+      response.status === "in_progress" &&
+      job.status === "in_progress"
+    ) {
+      html += `
         <button
           type="button"
-          class="complete-job-btn"
-          data-request-id="${escapeHtml(
-            job.id
-          )}"
+          class="mafCompleteJob"
+          data-request-id="${escapeHtml(job.id)}"
         >
           Complete Job
         </button>
       `;
     }
 
+    if (job.status === "completed") {
+      if (payment?.payment_status === "paid") {
+        html += `
+          <div class="card">
+            <p>
+              <strong>Payment received.</strong>
+            </p>
 
-    // ==================================================
-    // COMPLETED JOB
-    // ==================================================
+            <p>
+              ${
+                cashJob
+                  ? `Cash received. MR AWAY FIX commission: ${money(
+                      payment.commission_amount
+                    )}`
+                  : "Paid through Paystack."
+              }
+            </p>
+          </div>
+        `;
+      } else if (
+        cashJob &&
+        payment?.payment_status === "pending"
+      ) {
+        html += `
+          <div class="card">
+            <h4>Cash Payment</h4>
 
-    if (completed) {
+            <p>
+              Customer has selected cash and marked the
+              cash payment as ready.
+            </p>
 
-      jobActions = `
-        <p>
-          <strong>
-            Completed
-          </strong>
-        </p>
+            <p>
+              <strong>Cash amount:</strong>
+              ${money(payment.job_amount)}
+            </p>
 
-        <div class="card">
-
-          <p>
-            <strong>
-              Payment:
-            </strong>
-          </p>
-
-          <p>
-            The customer can now pay securely through Paystack.
-          </p>
-
-          <p>
-            Payment will be recorded automatically after Paystack confirms the transaction.
-          </p>
-
-        </div>
-
-        <div
-          id="job-review-${escapeHtml(
-            job.id
-          )}"
-        >
-          Loading customer review...
-        </div>
-      `;
+            <button
+              type="button"
+              class="mafConfirmCash"
+              data-request-id="${escapeHtml(job.id)}"
+            >
+              Confirm Cash Received
+            </button>
+          </div>
+        `;
+      } else if (cashJob) {
+        html += `
+          <div class="card">
+            <p>
+              Waiting for the customer to mark the cash
+              payment as ready.
+            </p>
+          </div>
+        `;
+      } else {
+        html += `
+          <div class="card">
+            <p>
+              Waiting for Paystack payment confirmation.
+            </p>
+          </div>
+        `;
+      }
     }
 
+    html += `</div>`;
+  }
+
+  jobsList.innerHTML = html;
+
+  bindProviderButtons(user);
+}
+
+/* =========================================================
+   PROVIDER ACTIONS
+   ========================================================= */
+
+function bindProviderButtons(user) {
+  $("mafSettleCommission")?.addEventListener(
+    "click",
+    async (event) => {
+      const button = event.currentTarget;
+
+      button.disabled = true;
+      button.textContent = "Preparing payment...";
+
+      const { data, error } =
+        await supabase.functions.invoke(
+          "create-commission-payment",
+          { body: {} }
+        );
+
+      if (error || !data?.authorization_url) {
+        alert(
+          error?.message ||
+            data?.error ||
+            "Unable to start commission payment."
+        );
+
+        button.disabled = false;
+        button.textContent = "Pay Commission Balance";
+        return;
+      }
+
+      window.location.href = data.authorization_url;
+    }
+  );
+
+  document
+    .querySelectorAll(".mafTakeJob")
+    .forEach((button) => {
+      button.addEventListener("click", async () => {
+        button.disabled = true;
+
+        const requestId = button.dataset.requestId;
+
+        const name =
+          $("providerName")?.value.trim();
+        const service =
+          $("providerService")?.value.trim();
+        const area =
+          $("providerArea")?.value.trim();
+
+        if (!name || !service || !area) {
+          alert("Please register your provider details first.");
+          button.disabled = false;
+          return;
+        }
+
+        const { data: existing } = await supabase
+          .from("service_responses")
+          .select("id")
+          .eq("request_id", requestId)
+          .eq("provider_user_id", user.id)
+          .limit(1);
+
+        if (existing?.length) {
+          alert("You have already requested this job.");
+          return;
+        }
+
+        const { error } = await supabase
+          .from("service_responses")
+          .insert({
+            request_id: requestId,
+            provider_user_id: user.id,
+            provider_name: name,
+            provider_service: service,
+            provider_location: area,
+            status: "pending",
+          });
+
+        if (error) {
+          alert(
+            errorText(error).toLowerCase().includes("row-level")
+              ? "This cash job may be paused because your commission balance has reached the cash-job limit."
+              : errorText(error)
+          );
+
+          button.disabled = false;
+          return;
+        }
+
+        alert("Job requested successfully.");
+        await loadProviderDashboard();
+      });
+    });
+
+  document
+    .querySelectorAll(".mafProposePrice")
+    .forEach((button) => {
+      button.addEventListener("click", async () => {
+        button.disabled = true;
+
+        const input = document.querySelector(
+          `.mafFinalPrice[data-request-id="${CSS.escape(
+            button.dataset.requestId
+          )}"]`
+        );
+
+        const amount = Number(input?.value);
+
+        if (!Number.isFinite(amount) || amount <= 0) {
+          alert("Enter a valid final price.");
+          button.disabled = false;
+          return;
+        }
+
+        const { data, error } = await supabase.rpc(
+          "propose_final_price",
+          {
+            p_request_id: button.dataset.requestId,
+            p_amount: amount,
+          }
+        );
+
+        if (error) {
+          alert(errorText(error));
+          button.disabled = false;
+          return;
+        }
+
+        alert(
+          `Final price ${money(
+            data.final_amount
+          )} sent to the customer for approval.`
+        );
+
+        await loadProviderDashboard();
+        await loadCustomerDashboard();
+      });
+    });
+
+  document
+    .querySelectorAll(".mafStartJob")
+    .forEach((button) => {
+      button.addEventListener("click", async () => {
+        button.disabled = true;
+
+        const requestId = button.dataset.requestId;
+
+        const { data: response } = await supabase
+          .from("service_responses")
+          .select("id")
+          .eq("request_id", requestId)
+          .eq("provider_user_id", user.id)
+          .eq("status", "accepted")
+          .maybeSingle();
+
+        if (!response) {
+          alert(
+            "This job is not assigned to your provider account."
+          );
+          button.disabled = false;
+          return;
+        }
+
+        const { error: jobError } = await supabase
+          .from("service_requests")
+          .update({
+            status: "in_progress",
+            is_active: false,
+          })
+          .eq("id", requestId);
+
+        if (jobError) {
+          alert(errorText(jobError));
+          button.disabled = false;
+          return;
+        }
+
+        const { error: responseError } = await supabase
+          .from("service_responses")
+          .update({ status: "in_progress" })
+          .eq("request_id", requestId)
+          .eq("provider_user_id", user.id);
+
+        if (responseError) {
+          alert(errorText(responseError));
+          return;
+        }
+
+        alert("Job started.");
+        await loadProviderDashboard();
+      });
+    });
+
+  document
+    .querySelectorAll(".mafCompleteJob")
+    .forEach((button) => {
+      button.addEventListener("click", async () => {
+        button.disabled = true;
+
+        const requestId = button.dataset.requestId;
+
+        const { data: response } = await supabase
+          .from("service_responses")
+          .select("id")
+          .eq("request_id", requestId)
+          .eq("provider_user_id", user.id)
+          .eq("status", "in_progress")
+          .maybeSingle();
+
+        if (!response) {
+          alert(
+            "This job is not assigned to your provider account."
+          );
+          button.disabled = false;
+          return;
+        }
+
+        const { data: job } = await supabase
+          .from("service_requests")
+          .select("final_amount, job_amount")
+          .eq("id", requestId)
+          .maybeSingle();
+
+        const amount =
+          Number(job?.final_amount || job?.job_amount || 0);
+
+        if (!amount || amount <= 0) {
+          alert("This job does not have a valid final amount.");
+          button.disabled = false;
+          return;
+        }
+
+        const { error: jobError } = await supabase
+          .from("service_requests")
+          .update({
+            status: "completed",
+            is_active: false,
+          })
+          .eq("id", requestId);
+
+        if (jobError) {
+          alert(errorText(jobError));
+          button.disabled = false;
+          return;
+        }
+
+        const { error: responseError } = await supabase
+          .from("service_responses")
+          .update({ status: "completed" })
+          .eq("request_id", requestId)
+          .eq("provider_user_id", user.id);
+
+        if (responseError) {
+          alert(errorText(responseError));
+          return;
+        }
+
+        alert("Job completed.");
+        await loadProviderDashboard();
+        await loadCustomerDashboard();
+      });
+    });
+
+  document
+    .querySelectorAll(".mafConfirmCash")
+    .forEach((button) => {
+      button.addEventListener("click", async () => {
+        button.disabled = true;
+        button.textContent = "Confirming...";
+
+        const { data, error } = await supabase.rpc(
+          "confirm_cash_payment",
+          {
+            p_request_id: button.dataset.requestId,
+          }
+        );
+
+        if (error) {
+          alert(errorText(error));
+          button.disabled = false;
+          button.textContent = "Confirm Cash Received";
+          return;
+        }
+
+        alert(
+          `Cash payment confirmed.\n\n` +
+          `Cash collected: ${money(data.job_amount)}\n` +
+          `MR AWAY FIX commission: ${money(data.commission)}\n` +
+          `Provider amount: ${money(data.provider_amount)}`
+        );
+
+        await loadProviderDashboard();
+        await loadCustomerDashboard();
+      });
+    });
+}
+
+/* =========================================================
+   CUSTOMER DASHBOARD
+   ========================================================= */
+
+async function loadCustomerDashboard() {
+  const customerResponses = $("customerResponses");
+
+  if (!customerResponses) return;
+
+  const user = await currentUser();
+
+  if (!user) {
+    customerResponses.classList.add("hidden");
+    return;
+  }
+
+  const { data: jobs, error } = await supabase
+    .from("service_requests")
+    .select("*")
+    .eq("customer_id", user.id)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    customerResponses.classList.remove("hidden");
+    customerResponses.innerHTML = `
+      <div class="card">
+        <p>Could not load your requests.</p>
+        <small>${escapeHtml(errorText(error))}</small>
+      </div>
+    `;
+    return;
+  }
+
+  customerResponses.classList.remove("hidden");
+
+  if (!jobs?.length) {
+    customerResponses.innerHTML = `
+      <div class="card">
+        <h3>Your Requests</h3>
+        <p>You have not posted a service request yet.</p>
+      </div>
+    `;
+    return;
+  }
+
+  let html = `
+    <h2>Your Service Requests</h2>
+  `;
+
+  for (const job of jobs) {
+    const { data: responses } = await supabase
+      .from("service_responses")
+      .select("*")
+      .eq("request_id", job.id)
+      .order("created_at", { ascending: false });
+
+    const { data: payment } = await supabase
+      .from("job_payments")
+      .select("*")
+      .eq("request_id", job.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const estimateText =
+      job.estimate_min != null && job.estimate_max != null
+        ? `${money(job.estimate_min)} – ${money(job.estimate_max)}`
+        : money(job.job_amount);
 
     html += `
       <div class="card">
 
-        <h4>
-          ${escapeHtml(
-            job.service_type
-          )}
-        </h4>
+        <h3>
+          ${escapeHtml(job.service_type)}
+        </h3>
 
         <p>
-          <strong>
-            Description:
-          </strong>
-
-          ${escapeHtml(
-            job.description
-          )}
+          <strong>Description:</strong>
+          ${escapeHtml(job.description)}
         </p>
 
         <p>
-          <strong>
-            Location:
-          </strong>
-
-          ${escapeHtml(
-            job.location
-          )}
+          <strong>Location:</strong>
+          ${escapeHtml(job.location)}
         </p>
 
         <p>
-          <strong>
-            Job Amount:
-          </strong>
+          <strong>Estimate:</strong>
+          ${estimateText}
+        </p>
 
-          R${Number(
-            job.job_amount || 0
-          ).toFixed(2)}
+        ${
+          job.final_amount
+            ? `
+              <p>
+                <strong>Final amount:</strong>
+                ${money(job.final_amount)}
+              </p>
+            `
+            : ""
+        }
+
+        <p>
+          <strong>Payment method:</strong>
+          ${
+            job.payment_method === "cash"
+              ? " Cash"
+              : " Online"
+          }
         </p>
 
         <p>
-          <strong>
-            Your response:
-          </strong>
-
-          ${escapeHtml(
-            response.status
-          )}
+          <strong>Job status:</strong>
+          ${escapeHtml(job.status)}
         </p>
-
-        <p>
-          <strong>
-            Job status:
-          </strong>
-
-          ${escapeHtml(
-            job.status
-          )}
-        </p>
-
-        ${jobActions}
-
-      </div>
     `;
-  }
 
-
-  jobsList.innerHTML =
-    html;
-
-
-  // ====================================================
-  // WANT THIS JOB
-  // ====================================================
-
-  document
-    .querySelectorAll(
-      ".want-job-btn"
-    )
-    .forEach(button => {
-
-      button.addEventListener(
-        "click",
-        async () => {
-
-          const requestId =
-            button.dataset.requestId;
-
-          button.disabled = true;
-
-
-          const {
-            data: currentProviderJob,
-            error: currentJobError
-          } = await supabase
-            .from("service_requests")
-            .select("*")
-            .eq(
-              "id",
-              requestId
-            )
-            .maybeSingle();
-
-
-          if (
-            currentJobError ||
-            !currentProviderJob ||
-            currentProviderJob.status !== "posted" ||
-            currentProviderJob.is_active !== true
-          ) {
-
-            alert(
-              "This job is no longer available."
-            );
-
-            await loadJobs();
-
-            return;
-          }
-
-
-          // =================================================
-          // DUPLICATE CHECK BY USER ID
-          // =================================================
-
-          const {
-            data: duplicateResponse,
-            error: duplicateError
-          } = await supabase
-            .from("service_responses")
-            .select("id")
-            .eq(
-              "request_id",
-              requestId
-            )
-            .eq(
-              "provider_user_id",
-              user.id
-            )
-            .maybeSingle();
-
-
-          if (duplicateError) {
-
-            console.error(
-              "Duplicate response check error:",
-              duplicateError
-            );
-
-            alert(
-              "Unable to check this job.\n\n" +
-              databaseErrorText(duplicateError)
-            );
-
-            button.disabled =
-              false;
-
-            return;
-          }
-
-
-          if (duplicateResponse) {
-
-            alert(
-              "You have already requested this job."
-            );
-
-            await loadJobs();
-
-            return;
-          }
-
-
-          // =================================================
-          // SAVE PROVIDER RESPONSE
-          // =================================================
-
-          const {
-            error: responseError
-          } = await supabase
-            .from("service_responses")
-            .insert({
-              request_id:
-                requestId,
-
-              provider_user_id:
-                user.id,
-
-              provider_name:
-                name,
-
-              provider_service:
-                service,
-
-              provider_location:
-                area,
-
-              status:
-                "pending"
-            });
-
-
-          if (responseError) {
-
-            console.error(
-              "Provider response error:",
-              responseError
-            );
-
-            alert(
-              "Unable to request this job.\n\n" +
-              "Database error:\n" +
-              databaseErrorText(responseError)
-            );
-
-            button.disabled =
-              false;
-
-            return;
-          }
-
-
-          alert(
-            "Job requested successfully!"
-          );
-
-
-          await loadJobs();
-          await loadNotifications();
-        }
-      );
-    });
-
-
-  // ====================================================
-  // START JOB
-  // ====================================================
-
-  document
-    .querySelectorAll(
-      ".start-job-btn"
-    )
-    .forEach(button => {
-
-      button.addEventListener(
-        "click",
-        async () => {
-
-          const requestId =
-            button.dataset.requestId;
-
-          button.disabled = true;
-
-
-          // ----------------------------------------------
-          // Update job only if it belongs to the provider
-          // through an accepted response.
-          // ----------------------------------------------
-
-          const {
-            data: acceptedResponse,
-            error: acceptedResponseError
-          } = await supabase
-            .from("service_responses")
-            .select("id")
-            .eq(
-              "request_id",
-              requestId
-            )
-            .eq(
-              "provider_user_id",
-              user.id
-            )
-            .eq(
-              "status",
-              "accepted"
-            )
-            .maybeSingle();
-
-
-          if (
-            acceptedResponseError ||
-            !acceptedResponse
-          ) {
-
-            console.error(
-              "Accepted provider check error:",
-              acceptedResponseError
-            );
-
-            alert(
-              "This job is not assigned to your provider account."
-            );
-
-            button.disabled =
-              false;
-
-            return;
-          }
-
-
-          const {
-            error: jobError
-          } = await supabase
-            .from("service_requests")
-            .update({
-              status:
-                "in_progress",
-
-              is_active:
-                false
-            })
-            .eq(
-              "id",
-              requestId
-            );
-
-
-          if (jobError) {
-
-            console.error(
-              "Start job error:",
-              jobError
-            );
-
-            alert(
-              "Unable to start job.\n\n" +
-              databaseErrorText(jobError)
-            );
-
-            button.disabled =
-              false;
-
-            return;
-          }
-
-
-          const {
-            error: responseError
-          } = await supabase
-            .from("service_responses")
-            .update({
-              status:
-                "in_progress"
-            })
-            .eq(
-              "request_id",
-              requestId
-            )
-            .eq(
-              "provider_user_id",
-              user.id
-            );
-
-
-          if (responseError) {
-
-            console.error(
-              "Provider response update error:",
-              responseError
-            );
-
-            alert(
-              "The job started, but the provider response status could not be updated.\n\n" +
-              databaseErrorText(responseError)
-            );
-          }
-
-
-          await loadJobs();
-          await loadNotifications();
-        }
-      );
-    });
-
-
-  // ====================================================
-  // COMPLETE JOB
-  // ====================================================
-
-  document
-    .querySelectorAll(
-      ".complete-job-btn"
-    )
-    .forEach(button => {
-
-      button.addEventListener(
-        "click",
-        async () => {
-
-          const requestId =
-            button.dataset.requestId;
-
-          button.disabled = true;
-
-
-          // ----------------------------------------------
-          // Verify this provider owns the response.
-          // ----------------------------------------------
-
-          const {
-            data: providerResponse,
-            error: providerResponseError
-          } = await supabase
-            .from("service_responses")
-            .select("id")
-            .eq(
-              "request_id",
-              requestId
-            )
-            .eq(
-              "provider_user_id",
-              user.id
-            )
-            .eq(
-              "status",
-              "in_progress"
-            )
-            .maybeSingle();
-
-
-          if (
-            providerResponseError ||
-            !providerResponse
-          ) {
-
-            console.error(
-              "Provider completion check error:",
-              providerResponseError
-            );
-
-            alert(
-              "This job is not assigned to your provider account."
-            );
-
-            button.disabled =
-              false;
-
-            return;
-          }
-
-
-          const {
-            error: jobError
-          } = await supabase
-            .from("service_requests")
-            .update({
-              status:
-                "completed",
-
-              is_active:
-                false
-            })
-            .eq(
-              "id",
-              requestId
-            );
-
-
-          if (jobError) {
-
-            console.error(
-              "Complete job error:",
-              jobError
-            );
-
-            alert(
-              "Unable to complete job.\n\n" +
-              databaseErrorText(jobError)
-            );
-
-            button.disabled =
-              false;
-
-            return;
-          }
-
-
-          const {
-            error: responseError
-          } = await supabase
-            .from("service_responses")
-            .update({
-              status:
-                "completed"
-            })
-            .eq(
-              "request_id",
-              requestId
-            )
-            .eq(
-              "provider_user_id",
-              user.id
-            );
-
-
-          if (responseError) {
-
-            console.error(
-              "Provider response update error:",
-              responseError
-            );
-
-            alert(
-              "The job was completed, but the provider response status could not be updated.\n\n" +
-              databaseErrorText(responseError)
-            );
-          }
-
-
-          await loadJobs();
-          await loadProviderReviews();
-          await loadNotifications();
-        }
-      );
-    });
-
-
-  // ====================================================
-  // CUSTOMER REVIEWS FOR COMPLETED JOBS
-  // ====================================================
-
-  for (
-    const response of myResponses
-  ) {
-
-    const {
-      data: job
-    } = await supabase
-      .from("service_requests")
-      .select("*")
-      .eq(
-        "id",
-        response.request_id
-      )
-      .maybeSingle();
-
-
-    if (
-      job &&
-      job.status === "completed"
-    ) {
-
-      await loadJobCustomerReview(
-        job.id
-      );
-    }
-  }
-}
-
-
-// ======================================================
-// AUTH UI
-// ======================================================
-
-function showAuthBox() {
-
-  showElement(authBox);
-
-  authBox?.scrollIntoView({
-    behavior: "smooth"
-  });
-
-  updateAuthForm();
-}
-
-
-function hideAuthBox() {
-
-  hideElement(authBox);
-}
-
-
-function updateAuthButton() {
-
-  if (!loginBtn) {
-    return;
-  }
-
-
-  supabase.auth
-    .getUser()
-    .then(({ data }) => {
-
-      if (data?.user) {
-
-        loginBtn.textContent =
-          "Account";
-
-      } else {
-
-        loginBtn.textContent =
-          "Sign in";
-      }
-    });
-}
-
-
-function updateAuthForm() {
-
-  if (
-    !authTitle ||
-    !authSubmit ||
-    !switchAuth
-  ) {
-    return;
-  }
-
-
-  if (
-    authMode ===
-    "signup"
-  ) {
-
-    authTitle.textContent =
-      "Create Account";
-
-    authSubmit.textContent =
-      "Create Account";
-
-    switchAuth.textContent =
-      "Already have an account? Sign in";
-
-  } else {
-
-    authTitle.textContent =
-      "Sign in";
-
-    authSubmit.textContent =
-      "Sign in";
-
-    switchAuth.textContent =
-      "Create a new account";
-  }
-}
-
-
-// ======================================================
-// ACCOUNT MENU
-// ======================================================
-
-function showAccountMenu() {
-
-  if (!authBox) return;
-
-
-  authBox.innerHTML = `
-    <div class="card">
-
-      <h2>
-        Account
-      </h2>
-
-      <button
-        id="signOutBtn"
-        type="button"
-      >
-        Sign out
-      </button>
-
-      <button
-        id="closeAccountBtn"
-        type="button"
-        class="outline"
-      >
-        Close
-      </button>
-
-    </div>
-  `;
-
-
-  showElement(authBox);
-
-
-  document
-    .getElementById(
-      "signOutBtn"
-    )
-    ?.addEventListener(
-      "click",
-      async () => {
-
-        await supabase.auth.signOut();
-
-        hideAuthBox();
-
-        hideElement(services);
-        hideElement(provider);
-        hideElement(providerJobs);
-        hideElement(jobHistory);
-        hideElement(providerProfiles);
-        hideElement(notifications);
-
-        if (requestBox) {
-          hideElement(requestBox);
-        }
-
-        updateAuthButton();
-      }
-    );
-
-
-  document
-    .getElementById(
-      "closeAccountBtn"
-    )
-    ?.addEventListener(
-      "click",
-      () => {
-
-        hideAuthBox();
-
-        window.location.reload();
-      }
-    );
-}
-
-
-// ======================================================
-// LOGIN BUTTON
-// ======================================================
-
-loginBtn?.addEventListener(
-  "click",
-  async () => {
-
-    const {
-      data: {
-        user
-      }
-    } = await supabase.auth.getUser();
-
-
-    if (user) {
-
-      showAccountMenu();
-
-    } else {
-
-      showAuthBox();
-    }
-  }
-);
-
-
-// ======================================================
-// SWITCH SIGN IN / SIGN UP
-// ======================================================
-
-switchAuth?.addEventListener(
-  "click",
-  () => {
-
-    authMode =
-      authMode === "signin"
-        ? "signup"
-        : "signin";
-
-    updateAuthForm();
-  }
-);
-
-
-// ======================================================
-// CLOSE AUTH
-// ======================================================
-
-closeAuth?.addEventListener(
-  "click",
-  () => {
-
-    hideAuthBox();
-  }
-);
-
-
-// ======================================================
-// AUTH SUBMIT
-// ======================================================
-
-authSubmit?.addEventListener(
-  "click",
-  async () => {
-
-    const email =
-      authEmail?.value.trim();
-
-    const password =
-      authPassword?.value;
-
-
-    if (
-      !email ||
-      !password
-    ) {
-
-      if (authStatus) {
-
-        authStatus.textContent =
-          "Please enter your email and password.";
-      }
-
-      return;
+    if (job.final_amount_status === "provider_proposed") {
+      html += `
+        <div class="card">
+          <h4>Final Price Approval</h4>
+
+          <p>
+            Provider proposed:
+            <strong>${money(job.final_amount)}</strong>
+          </p>
+
+          <button
+            type="button"
+            class="mafApprovePrice"
+            data-request-id="${escapeHtml(job.id)}"
+          >
+            Approve Final Price
+          </button>
+
+          <button
+            type="button"
+            class="mafRejectPrice outline"
+            data-request-id="${escapeHtml(job.id)}"
+          >
+            Reject / Ask Provider to Reprice
+          </button>
+        </div>
+      `;
     }
 
-
-    if (authStatus) {
-
-      authStatus.textContent =
-        "Please wait...";
+    if (job.final_amount_status === "customer_approved") {
+      html += `
+        <div class="card">
+          <p>
+             Final price approved:
+            <strong>${money(job.final_amount)}</strong>
+          </p>
+        </div>
+      `;
     }
 
+    html += `
+      <h4>Provider Responses</h4>
+    `;
 
-    // ==================================================
-    // SIGN UP
-    // ==================================================
+    if (!responses?.length) {
+      html += `
+        <p>
+          Waiting for providers to respond.
+        </p>
+      `;
+    }
 
-    if (
-      authMode ===
-      "signup"
-    ) {
+    for (const response of responses || []) {
+      html += `
+        <div class="card">
 
-      const {
-        data,
-        error
-      } = await supabase.auth.signUp({
-        email,
-        password
-      });
+          <h4>
+             ${escapeHtml(
+              response.provider_name || "Provider"
+            )}
+          </h4>
 
+          <p>
+            Service:
+            ${escapeHtml(response.provider_service)}
+          </p>
 
-      if (error) {
+          <p>
+             ${escapeHtml(response.provider_location)}
+          </p>
 
-        console.error(error);
-
-        if (authStatus) {
-
-          authStatus.textContent =
-            error.message;
-        }
-
-        return;
-      }
-
+          <p>
+            <strong>Response:</strong>
+            ${escapeHtml(response.status)}
+          </p>
+      `;
 
       if (
-        data?.user &&
-        data?.session
+        response.status === "pending" &&
+        job.status === "posted"
       ) {
+        html += `
+          <button
+            type="button"
+            class="mafAcceptProvider"
+            data-response-id="${escapeHtml(response.id)}"
+            data-request-id="${escapeHtml(job.id)}"
+          >
+             Accept Provider
+          </button>
 
-        await ensureCustomerProfile(
-          data.user
+          <button
+            type="button"
+            class="mafRejectProvider outline"
+            data-response-id="${escapeHtml(response.id)}"
+          >
+             Reject
+          </button>
+        `;
+      }
+
+      html += `</div>`;
+    }
+
+    /* PAYMENT */
+    if (job.status === "completed") {
+      if (payment?.payment_status === "paid") {
+        html += `
+          <div class="card">
+            <h4>Payment</h4>
+            <p>
+               Payment received.
+            </p>
+            <p>
+              Method:
+              ${escapeHtml(payment.payment_method)}
+            </p>
+          </div>
+        `;
+      } else if (job.payment_method === "cash") {
+        if (payment?.payment_status === "pending") {
+          html += `
+            <div class="card">
+              <h4> Cash Payment Pending</h4>
+
+              <p>
+                Hand the cash to the provider.
+                The provider must confirm receipt.
+              </p>
+
+              <p>
+                <strong>Amount:</strong>
+                ${money(
+                  payment.job_amount ||
+                    job.final_amount ||
+                    job.job_amount
+                )}
+              </p>
+
+              <button
+                type="button"
+                class="mafCancelCash outline"
+                data-request-id="${escapeHtml(job.id)}"
+              >
+                Cancel Cash Payment Request
+              </button>
+            </div>
+          `;
+        } else {
+          html += `
+            <div class="card">
+              <h4> Pay Cash</h4>
+
+              <p>
+                Pay the provider the final approved amount.
+              </p>
+
+              <p>
+                <strong>Amount:</strong>
+                ${money(job.final_amount || job.job_amount)}
+              </p>
+
+              <button
+                type="button"
+                class="mafRequestCash"
+                data-request-id="${escapeHtml(job.id)}"
+              >
+                I Will Pay Cash
+              </button>
+            </div>
+          `;
+        }
+      } else {
+        html += `
+          <div class="card">
+            <h4> Online Payment</h4>
+
+            <p>
+              Pay securely through Paystack.
+            </p>
+
+            <button
+              type="button"
+              class="mafPayOnline"
+              data-request-id="${escapeHtml(job.id)}"
+            >
+              Pay ${money(job.final_amount || job.job_amount)} Online
+            </button>
+          </div>
+        `;
+      }
+    }
+
+    /* REVIEW */
+    if (
+      job.status === "completed" &&
+      payment?.payment_status === "paid"
+    ) {
+      const { data: review } = await supabase
+        .from("service_reviews")
+        .select("id")
+        .eq("request_id", job.id)
+        .limit(1)
+        .maybeSingle();
+
+      if (!review) {
+        html += `
+          <div class="card">
+            <h4>Rate this provider</h4>
+
+            <select
+              class="mafRating"
+              data-request-id="${escapeHtml(job.id)}"
+            >
+              <option value="">Choose rating</option>
+              <option value="5"> 5</option>
+              <option value="4"> 4</option>
+              <option value="3"> 3</option>
+              <option value="2"> 2</option>
+              <option value="1"> 1</option>
+            </select>
+
+            <textarea
+              class="mafReview"
+              data-request-id="${escapeHtml(job.id)}"
+              placeholder="Write a review (optional)"
+            ></textarea>
+
+            <button
+              type="button"
+              class="mafSubmitReview"
+              data-request-id="${escapeHtml(job.id)}"
+            >
+              Submit Review
+            </button>
+          </div>
+        `;
+      } else {
+        html += `
+          <p>
+             You have already reviewed this provider.
+          </p>
+        `;
+      }
+    }
+
+    html += `</div>`;
+  }
+
+  customerResponses.innerHTML = html;
+
+  bindCustomerButtons(user);
+}
+
+/* =========================================================
+   CUSTOMER ACTIONS
+   ========================================================= */
+
+function bindCustomerButtons(user) {
+  document
+    .querySelectorAll(".mafAcceptProvider")
+    .forEach((button) => {
+      button.addEventListener("click", async () => {
+        button.disabled = true;
+
+        const requestId = button.dataset.requestId;
+        const responseId = button.dataset.responseId;
+
+        const { data: response } = await supabase
+          .from("service_responses")
+          .select("provider_user_id, provider_name")
+          .eq("id", responseId)
+          .eq("request_id", requestId)
+          .maybeSingle();
+
+        if (!response) {
+          alert("Provider response not found.");
+          button.disabled = false;
+          return;
+        }
+
+        const { error: responseError } = await supabase
+          .from("service_responses")
+          .update({ status: "accepted" })
+          .eq("id", responseId)
+          .eq("request_id", requestId);
+
+        if (responseError) {
+          alert(errorText(responseError));
+          button.disabled = false;
+          return;
+        }
+
+        const { error: rejectError } = await supabase
+          .from("service_responses")
+          .update({ status: "rejected" })
+          .eq("request_id", requestId)
+          .eq("status", "pending")
+          .neq("id", responseId);
+
+        if (rejectError) {
+          console.warn("Could not reject other responses:", rejectError);
+        }
+
+        const { error: jobError } = await supabase
+          .from("service_requests")
+          .update({
+            status: "accepted",
+            provider_id: response.provider_user_id || null,
+            is_active: false,
+          })
+          .eq("id", requestId)
+          .eq("customer_id", user.id);
+
+        if (jobError) {
+          alert(errorText(jobError));
+          return;
+        }
+
+        alert(
+          `Provider ${response.provider_name || ""} accepted successfully.`
         );
 
-
-        if (authStatus) {
-
-          authStatus.textContent =
-            "Account created successfully.";
-        }
-
-
-        hideAuthBox();
-
-        showElement(services);
-        showElement(providerProfiles);
-        showElement(jobHistory);
-
-        await loadCustomerHistory();
-        await loadLocalServiceProviders();
-        await loadNotifications();
-
-      } else {
-
-        if (authStatus) {
-
-          authStatus.textContent =
-            "Account created. Please check your email to confirm your account, then sign in.";
-        }
-      }
-
-
-      updateAuthButton();
-
-      return;
-    }
-
-
-    // ==================================================
-    // SIGN IN
-    // ==================================================
-
-    const {
-      data,
-      error
-    } = await supabase.auth.signInWithPassword({
-      email,
-      password
+        await loadCustomerDashboard();
+      });
     });
 
+  document
+    .querySelectorAll(".mafRejectProvider")
+    .forEach((button) => {
+      button.addEventListener("click", async () => {
+        button.disabled = true;
 
-    if (error) {
+        const { error } = await supabase
+          .from("service_responses")
+          .update({ status: "rejected" })
+          .eq("id", button.dataset.responseId);
 
-      console.error(error);
+        if (error) {
+          alert(errorText(error));
+          button.disabled = false;
+          return;
+        }
 
-      if (authStatus) {
+        await loadCustomerDashboard();
+      });
+    });
 
-        authStatus.textContent =
-          error.message;
-      }
+  document
+    .querySelectorAll(".mafApprovePrice")
+    .forEach((button) => {
+      button.addEventListener("click", async () => {
+        button.disabled = true;
 
-      return;
-    }
+        const { data, error } = await supabase.rpc(
+          "approve_final_price",
+          {
+            p_request_id: button.dataset.requestId,
+            p_approve: true,
+          }
+        );
 
+        if (error) {
+          alert(errorText(error));
+          button.disabled = false;
+          return;
+        }
 
-    if (data?.user) {
+        alert(
+          `Final price approved: ${money(data.final_amount)}`
+        );
 
-      await ensureCustomerProfile(
-        data.user
+        await loadCustomerDashboard();
+        await loadProviderDashboard();
+      });
+    });
+
+  document
+    .querySelectorAll(".mafRejectPrice")
+    .forEach((button) => {
+      button.addEventListener("click", async () => {
+        button.disabled = true;
+
+        const { error } = await supabase.rpc(
+          "approve_final_price",
+          {
+            p_request_id: button.dataset.requestId,
+            p_approve: false,
+          }
+        );
+
+        if (error) {
+          alert(errorText(error));
+          button.disabled = false;
+          return;
+        }
+
+        alert(
+          "The final price was rejected. The provider can propose another price."
+        );
+
+        await loadCustomerDashboard();
+      });
+    });
+
+  document
+    .querySelectorAll(".mafRequestCash")
+    .forEach((button) => {
+      button.addEventListener("click", async () => {
+        button.disabled = true;
+
+        const { data, error } = await supabase.rpc(
+          "request_cash_payment",
+          {
+            p_request_id: button.dataset.requestId,
+          }
+        );
+
+        if (error) {
+          alert(errorText(error));
+          button.disabled = false;
+          return;
+        }
+
+        alert(
+          `Cash payment marked as pending.\n\n` +
+          `Amount: ${money(data.amount)}\n` +
+          `MR AWAY FIX commission: ${money(data.commission)}`
+        );
+
+        await loadCustomerDashboard();
+      });
+    });
+
+  document
+    .querySelectorAll(".mafCancelCash")
+    .forEach((button) => {
+      button.addEventListener("click", async () => {
+        button.disabled = true;
+
+        const { error } = await supabase.rpc(
+          "cancel_cash_payment",
+          {
+            p_request_id: button.dataset.requestId,
+          }
+        );
+
+        if (error) {
+          alert(errorText(error));
+          button.disabled = false;
+          return;
+        }
+
+        await loadCustomerDashboard();
+      });
+    });
+
+  document
+    .querySelectorAll(".mafPayOnline")
+    .forEach((button) => {
+      button.addEventListener("click", async () => {
+        button.disabled = true;
+        button.textContent = "Opening Paystack...";
+
+        const { data, error } =
+          await supabase.functions.invoke(
+            "create-paystack-payment",
+            {
+              body: {
+                request_id: button.dataset.requestId,
+              },
+            }
+          );
+
+        if (error || !data?.authorization_url) {
+          alert(
+            error?.message ||
+              data?.error ||
+              "Unable to start Paystack payment."
+          );
+
+          button.disabled = false;
+          button.textContent = "Pay Online";
+          return;
+        }
+
+        window.location.href = data.authorization_url;
+      });
+    });
+
+  document
+    .querySelectorAll(".mafSubmitReview")
+    .forEach((button) => {
+      button.addEventListener("click", async () => {
+        button.disabled = true;
+
+        const requestId = button.dataset.requestId;
+
+        const rating = Number(
+          document.querySelector(
+            `.mafRating[data-request-id="${CSS.escape(requestId)}"]`
+          )?.value
+        );
+
+        const review = document.querySelector(
+          `.mafReview[data-request-id="${CSS.escape(requestId)}"]`
+        )?.value.trim() || "";
+
+        if (!rating || rating < 1 || rating > 5) {
+          alert("Please choose a rating from 1 to 5.");
+          button.disabled = false;
+          return;
+        }
+
+        const { data: providerResponse } = await supabase
+          .from("service_responses")
+          .select("provider_name")
+          .eq("request_id", requestId)
+          .eq("status", "completed")
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (!providerResponse) {
+          alert("Provider information could not be found.");
+          button.disabled = false;
+          return;
+        }
+
+        const { error } = await supabase
+          .from("service_reviews")
+          .insert({
+            request_id: requestId,
+            provider_name: providerResponse.provider_name,
+            rating,
+            review,
+          });
+
+        if (error) {
+          alert(errorText(error));
+          button.disabled = false;
+          return;
+        }
+
+        alert("Thank you. Your review has been submitted.");
+        await loadCustomerDashboard();
+      });
+    });
+}
+
+/* =========================================================
+   PROVIDER PROFILES
+   ========================================================= */
+
+async function loadProviderProfiles() {
+  const box = $("providerProfiles");
+  const list = $("providerProfilesList");
+
+  if (!box || !list) return;
+
+  const { data, error } = await supabase
+    .from("service_providers")
+    .select(
+      "id, user_id, business_name, service_type, description, location, verified, available"
+    )
+    .eq("available", true)
+    .order("created_at", { ascending: false })
+    .limit(50);
+
+  if (error) {
+    list.innerHTML = `
+      <p>Could not load providers.</p>
+      <small>${escapeHtml(errorText(error))}</small>
+    `;
+    return;
+  }
+
+  box.classList.remove("hidden");
+
+  if (!data?.length) {
+    list.innerHTML =
+      "<p>No local service providers are registered yet.</p>";
+    return;
+  }
+
+  list.innerHTML = data
+    .map(
+      (item) => `
+        <div class="card">
+
+          <h3>
+             ${escapeHtml(
+              item.business_name || "Service Provider"
+            )}
+          </h3>
+
+          <p>
+            <strong>Service:</strong>
+            ${escapeHtml(item.service_type || "")}
+          </p>
+
+          <p>
+            <strong>Area:</strong>
+            ${escapeHtml(item.location || "")}
+          </p>
+
+          ${
+            item.description
+              ? `<p>${escapeHtml(item.description)}</p>`
+              : ""
+          }
+
+          <p>
+            ${
+              item.verified
+                ? " Verified provider"
+                : "Provider verification pending"
+            }
+          </p>
+
+        </div>
+      `
+    )
+    .join("");
+}
+
+/* =========================================================
+   JOB HISTORY
+   ========================================================= */
+
+async function loadJobHistory() {
+  const box = $("jobHistory");
+  const list = $("historyList");
+
+  if (!box || !list) return;
+
+  const user = await currentUser();
+  if (!user) {
+    box.classList.add("hidden");
+    return;
+  }
+
+  const { data: customerJobs } = await supabase
+    .from("service_requests")
+    .select("*")
+    .eq("customer_id", user.id)
+    .eq("status", "completed")
+    .order("created_at", { ascending: false });
+
+  const { data: providerResponses } = await supabase
+    .from("service_responses")
+    .select("*")
+    .eq("provider_user_id", user.id)
+    .eq("status", "completed")
+    .order("created_at", { ascending: false });
+
+  const providerRequestIds = (providerResponses || [])
+    .map((row) => row.request_id)
+    .filter(Boolean);
+
+  let providerJobs = [];
+
+  if (providerRequestIds.length) {
+    const { data } = await supabase
+      .from("service_requests")
+      .select("*")
+      .in("id", providerRequestIds);
+
+    providerJobs = data || [];
+  }
+
+  const all = [
+    ...(customerJobs || []).map((job) => ({
+      ...job,
+      historyRole: "Customer",
+    })),
+    ...providerJobs.map((job) => ({
+      ...job,
+      historyRole: "Provider",
+    })),
+  ];
+
+  box.classList.remove("hidden");
+
+  if (!all.length) {
+    list.innerHTML =
+      "<p>No completed jobs yet.</p>";
+    return;
+  }
+
+  list.innerHTML = all
+    .map(
+      (job) => `
+        <div class="card">
+
+          <h3>
+            ${escapeHtml(job.service_type)}
+          </h3>
+
+          <p>
+            ${escapeHtml(job.description)}
+          </p>
+
+          <p>
+             ${escapeHtml(job.location)}
+          </p>
+
+          <p>
+            <strong>Role:</strong>
+            ${escapeHtml(job.historyRole)}
+          </p>
+
+          <p>
+            <strong>Final amount:</strong>
+            ${money(job.final_amount || job.job_amount)}
+          </p>
+
+          <p>
+            <strong>Status:</strong>
+            Completed
+          </p>
+
+        </div>
+      `
+    )
+    .join("");
+}
+
+/* =========================================================
+   NOTIFICATIONS
+   ========================================================= */
+
+async function loadNotifications() {
+  const box = $("notifications");
+  const list = $("notificationsList");
+
+  if (!box || !list) return;
+
+  const user = await currentUser();
+  if (!user) {
+    box.classList.add("hidden");
+    return;
+  }
+
+  const notifications = [];
+
+  const { data: customerJobs } = await supabase
+    .from("service_requests")
+    .select("*")
+    .eq("customer_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(10);
+
+  for (const job of customerJobs || []) {
+    if (job.status === "completed") {
+      notifications.push(
+        `Your ${job.service_type} job has been completed.`
       );
     }
 
-
-    if (authStatus) {
-
-      authStatus.textContent =
-        "Signed in successfully.";
+    if (job.final_amount_status === "provider_proposed") {
+      notifications.push(
+        `A provider has proposed a final price of ${money(
+          job.final_amount
+        )} for your ${job.service_type} job.`
+      );
     }
 
+    const { data: responses } = await supabase
+      .from("service_responses")
+      .select("provider_name,status")
+      .eq("request_id", job.id);
 
-    hideAuthBox();
+    for (const response of responses || []) {
+      if (response.status === "pending") {
+        notifications.push(
+          `${response.provider_name} responded to your ${job.service_type} request.`
+        );
+      }
 
-    showElement(services);
-    showElement(providerProfiles);
-    showElement(jobHistory);
-
-    await loadCustomerHistory();
-    await loadLocalServiceProviders();
-    await loadNotifications();
-
-    updateAuthButton();
+      if (response.status === "accepted") {
+        notifications.push(
+          `${response.provider_name} was accepted for your ${job.service_type} job.`
+        );
+      }
+    }
   }
-);
 
+  const { data: providerResponses } = await supabase
+    .from("service_responses")
+    .select("request_id,provider_name,status")
+    .eq("provider_user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(10);
 
-// ======================================================
-// AUTH STATE CHANGE
-// ======================================================
-
-supabase.auth.onAuthStateChange(
-  async (
-    event,
-    session
-  ) => {
-
-    console.log(
-      "Auth state:",
-      event
-    );
-
-
-    updateAuthButton();
-
-
-    if (!session?.user) {
-
-      hideElement(services);
-      hideElement(provider);
-      hideElement(providerJobs);
-      hideElement(jobHistory);
-      hideElement(providerProfiles);
-      hideElement(notifications);
-      hideElement(requestBox);
-
-      return;
+  for (const response of providerResponses || []) {
+    if (response.status === "accepted") {
+      notifications.push(
+        `You were accepted for a job.`
+      );
     }
 
-
-    await ensureCustomerProfile(
-      session.user
-    );
-
-
-    showElement(services);
-    showElement(providerProfiles);
-    showElement(jobHistory);
-
-    await loadCustomerHistory();
-    await loadLocalServiceProviders();
-    await loadNotifications();
+    if (response.status === "rejected") {
+      notifications.push(
+        `A customer rejected your job response.`
+      );
+    }
   }
-);
 
+  box.classList.remove("hidden");
 
-// ======================================================
-// INITIAL LOAD
-// ======================================================
+  if (!notifications.length) {
+    list.innerHTML =
+      "<p>No new notifications.</p>";
+    return;
+  }
 
-async function initializeApp() {
+  list.innerHTML = notifications
+    .slice(0, 20)
+    .map(
+      (message) => `
+        <div class="card">
+          <p> ${escapeHtml(message)}</p>
+        </div>
+      `
+    )
+    .join("");
+}
 
-  updateAuthForm();
-  updateAuthButton();
+/* =========================================================
+   REVIEWS / PROVIDER REVIEW SUMMARY
+   ========================================================= */
 
+async function loadProviderReviews() {
+  const box = $("providerReviews");
 
-  const {
-    data: {
-      session
-    }
-  } = await supabase.auth.getSession();
+  if (!box) return;
 
+  const { data: reviews, error } = await supabase
+    .from("service_reviews")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(20);
 
-  if (session?.user) {
+  if (error) {
+    console.error("Review loading error:", error);
+    return;
+  }
 
-    await ensureCustomerProfile(
-      session.user
-    );
+  if (!reviews?.length) {
+    box.innerHTML = `
+      <h3>Customer Reviews</h3>
+      <p>No reviews yet.</p>
+    `;
+    return;
+  }
 
-    showElement(services);
-    showElement(providerProfiles);
-    showElement(jobHistory);
+  box.innerHTML = `
+    <h3>Customer Reviews</h3>
 
-    await loadCustomerHistory();
-    await loadLocalServiceProviders();
-    await loadNotifications();
+    ${reviews
+      .map(
+        (review) => `
+          <div class="card">
+            <p>
+              <strong>${escapeHtml(
+                review.provider_name
+              )}</strong>
+            </p>
 
-  } else {
+            <p>
+              ${"".repeat(
+                Math.max(
+                  1,
+                  Math.min(5, Number(review.rating))
+                )
+              )}
+            </p>
 
-    hideElement(services);
-    hideElement(provider);
-    hideElement(providerJobs);
-    hideElement(jobHistory);
-    hideElement(providerProfiles);
-    hideElement(notifications);
-    hideElement(requestBox);
+            ${
+              review.review
+                ? `<p>${escapeHtml(review.review)}</p>`
+                : ""
+            }
+          </div>
+        `
+      )
+      .join("")}
+  `;
+}
+
+/* =========================================================
+   REFRESH
+   ========================================================= */
+
+async function refreshAllScreens() {
+  const user = await currentUser();
+
+  await updateAccountButton(user);
+
+  if (!user) return;
+
+  ensureCustomerPaymentUI();
+
+  await Promise.allSettled([
+    loadCustomerDashboard(),
+    loadProviderProfiles(),
+    loadJobHistory(),
+    loadNotifications(),
+    loadProviderReviews(),
+  ]);
+
+  if (
+    provider &&
+    !provider.classList.contains("hidden")
+  ) {
+    await loadProviderDashboard();
   }
 }
 
+/* =========================================================
+   INITIALIZATION
+   ========================================================= */
 
-initializeApp();
+(async function initializeMRAwayFix() {
+  ensureCustomerPaymentUI();
+
+  const user = await currentUser();
+
+  await updateAccountButton(user);
+
+  if (user) {
+    await refreshAllScreens();
+  }
+
+  console.log(
+    "MR AWAY FIX COMPLETE APP.JS LOADED — MARKETPLACE VERSION"
+  );
+})();
