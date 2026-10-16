@@ -2,7 +2,7 @@ import { supabase } from "./supabaseClient.js";
 
 /*
 ==========================================================
-MR AWAY FIX — COMPLETE app.js
+MR AWAY FIX â€” COMPLETE app.js
 ==========================================================
 This is the complete browser-side application file.
 
@@ -415,7 +415,7 @@ function ensureCustomerPaymentUI() {
           value="cash"
           checked
         >
-         Pay Cash
+         Pay Cash
       </label>
 
       <br>
@@ -426,7 +426,7 @@ function ensureCustomerPaymentUI() {
           name="mafPaymentMethod"
           value="online"
         >
-         Pay Online through Paystack
+         Pay Online through Paystack
       </label>
 
       <p>
@@ -820,7 +820,7 @@ async function loadProviderDashboard() {
           ? `
             <div class="card">
               <p>
-                 Cash jobs are temporarily paused because
+                 Cash jobs are temporarily paused because
                 your outstanding MR AWAY FIX commission has
                 reached the limit.
               </p>
@@ -844,7 +844,7 @@ async function loadProviderDashboard() {
             </button>
           `
           : `
-            <p> No outstanding commission balance.</p>
+            <p> No outstanding commission balance.</p>
           `
       }
     </div>
@@ -878,33 +878,33 @@ async function loadProviderDashboard() {
       html += `
         <div class="job-card">
 
-          <h3> ${escapeHtml(job.service_type)}</h3>
+          <h3> ${escapeHtml(job.service_type)}</h3>
 
           <p>
             ${escapeHtml(job.description)}
           </p>
 
           <p>
-             ${escapeHtml(job.location)}
+             ${escapeHtml(job.location)}
           </p>
 
           <p>
             <strong>MR AWAY FIX estimate:</strong>
             ${money(job.estimate_min || job.job_amount)}
-            –
+            â€“
             ${money(job.estimate_max || job.job_amount)}
           </p>
 
           <p>
             <strong>Payment:</strong>
-            ${cashJob ? " CASH" : " ONLINE"}
+            ${cashJob ? " CASH" : " ONLINE"}
           </p>
 
           ${
             cashJob && cashPaused
               ? `
                 <p>
-                   Cash jobs are unavailable until your
+                   Cash jobs are unavailable until your
                   commission balance is settled.
                 </p>
               `
@@ -960,16 +960,16 @@ async function loadProviderDashboard() {
     html += `
       <div class="job-card">
 
-        <h3> ${escapeHtml(job.service_type)}</h3>
+        <h3> ${escapeHtml(job.service_type)}</h3>
 
         <p>${escapeHtml(job.description)}</p>
 
-        <p> ${escapeHtml(job.location)}</p>
+        <p> ${escapeHtml(job.location)}</p>
 
         <p>
           <strong>Estimate:</strong>
           ${money(job.estimate_min || job.job_amount)}
-          –
+          â€“
           ${money(job.estimate_max || job.job_amount)}
         </p>
 
@@ -986,7 +986,7 @@ async function loadProviderDashboard() {
 
         <p>
           <strong>Payment:</strong>
-          ${cashJob ? " Cash" : " Online"}
+          ${cashJob ? " Cash" : " Online"}
         </p>
 
         <p>
@@ -1520,7 +1520,7 @@ async function loadCustomerDashboard() {
 
     const estimateText =
       job.estimate_min != null && job.estimate_max != null
-        ? `${money(job.estimate_min)} – ${money(job.estimate_max)}`
+        ? `${money(job.estimate_min)} â€“ ${money(job.estimate_max)}`
         : money(job.job_amount);
 
     html += `
@@ -1560,8 +1560,8 @@ async function loadCustomerDashboard() {
           <strong>Payment method:</strong>
           ${
             job.payment_method === "cash"
-              ? " Cash"
-              : " Online"
+              ? " Cash"
+              : " Online"
           }
         </p>
 
@@ -1604,7 +1604,7 @@ async function loadCustomerDashboard() {
       html += `
         <div class="card">
           <p>
-             Final price approved:
+             Final price approved:
             <strong>${money(job.final_amount)}</strong>
           </p>
         </div>
@@ -1628,7 +1628,7 @@ async function loadCustomerDashboard() {
         <div class="card">
 
           <h4>
-             ${escapeHtml(
+             ${escapeHtml(
               response.provider_name || "Provider"
             )}
           </h4>
@@ -1639,7 +1639,7 @@ async function loadCustomerDashboard() {
           </p>
 
           <p>
-             ${escapeHtml(response.provider_location)}
+             ${escapeHtml(response.provider_location)}
           </p>
 
           <p>
@@ -1659,7 +1659,7 @@ async function loadCustomerDashboard() {
             data-response-id="${escapeHtml(response.id)}"
             data-request-id="${escapeHtml(job.id)}"
           >
-             Accept Provider
+             Accept Provider
           </button>
 
           <button
@@ -1667,7 +1667,7 @@ async function loadCustomerDashboard() {
             class="mafRejectProvider outline"
             data-response-id="${escapeHtml(response.id)}"
           >
-             Reject
+             Reject
           </button>
         `;
       }
@@ -1682,7 +1682,7 @@ async function loadCustomerDashboard() {
           <div class="card">
             <h4>Payment</h4>
             <p>
-               Payment received.
+               Payment received.
             </p>
             <p>
               Method:
@@ -1694,7 +1694,7 @@ async function loadCustomerDashboard() {
         if (payment?.payment_status === "pending") {
           html += `
             <div class="card">
-              <h4> Cash Payment Pending</h4>
+              <h4> Cash Payment Pending</h4>
 
               <p>
                 Hand the cash to the provider.
@@ -1722,7 +1722,7 @@ async function loadCustomerDashboard() {
         } else {
           html += `
             <div class="card">
-              <h4> Pay Cash</h4>
+              <h4> Pay Cash</h4>
 
               <p>
                 Pay the provider the final approved amount.
@@ -1746,7 +1746,7 @@ async function loadCustomerDashboard() {
       } else {
         html += `
           <div class="card">
-            <h4> Online Payment</h4>
+            <h4> Online Payment</h4>
 
             <p>
               Pay securely through Paystack.
@@ -1786,11 +1786,11 @@ async function loadCustomerDashboard() {
               data-request-id="${escapeHtml(job.id)}"
             >
               <option value="">Choose rating</option>
-              <option value="5"> 5</option>
-              <option value="4"> 4</option>
-              <option value="3"> 3</option>
-              <option value="2"> 2</option>
-              <option value="1"> 1</option>
+              <option value="5"> 5</option>
+              <option value="4"> 4</option>
+              <option value="3"> 3</option>
+              <option value="2"> 2</option>
+              <option value="1"> 1</option>
             </select>
 
             <textarea
@@ -1811,7 +1811,7 @@ async function loadCustomerDashboard() {
       } else {
         html += `
           <p>
-             You have already reviewed this provider.
+             You have already reviewed this provider.
           </p>
         `;
       }
@@ -2162,7 +2162,7 @@ async function loadProviderProfiles() {
         <div class="card">
 
           <h3>
-             ${escapeHtml(
+             ${escapeHtml(
               item.business_name || "Service Provider"
             )}
           </h3>
@@ -2192,7 +2192,7 @@ async function loadProviderProfiles() {
           <p>
             ${
               item.verified
-                ? " Verified provider"
+                ? " Verified provider"
                 : "Provider verification pending"
             }
           </p>
@@ -2281,7 +2281,7 @@ async function loadJobHistory() {
           </p>
 
           <p>
-             ${escapeHtml(job.location)}
+             ${escapeHtml(job.location)}
           </p>
 
           <p>
@@ -2399,7 +2399,7 @@ async function loadNotifications() {
     .map(
       (message) => `
         <div class="card">
-          <p> ${escapeHtml(message)}</p>
+          <p> ${escapeHtml(message)}</p>
         </div>
       `
     )
@@ -2448,7 +2448,7 @@ async function loadProviderReviews() {
             </p>
 
             <p>
-              ${"".repeat(
+              ${"â˜…".repeat(
                 Math.max(
                   1,
                   Math.min(5, Number(review.rating))
@@ -2513,6 +2513,6 @@ async function refreshAllScreens() {
   }
 
   console.log(
-    "MR AWAY FIX COMPLETE APP.JS LOADED — MARKETPLACE VERSION"
+    "MR AWAY FIX COMPLETE APP.JS LOADED â€” MARKETPLACE VERSION"
   );
 })();
