@@ -891,15 +891,15 @@ async function loadProviderDashboard() {
       <p class="small-note">This figure records your share of successful online job payments. It does not by itself confirm that the money has reached your bank account.</p>
 
       <h3>Bank payout history</h3>
-      ${payoutError ? '<p>Payout history is temporarily unavailable.</p>' : (payoutHistory || []).length ? (payoutHistory || []).map((payout) => `
-        <div class="card">
-          <p><strong>Amount:</strong> ${money(payout.amount)}</p>
-          <p><strong>Status:</strong> ${escapeHtml(payout.status)}</p>
-          <p><strong>Scheduled:</strong> ${escapeHtml(new Date(payout.scheduled_for).toLocaleString('en-ZA', { timeZone: 'Africa/Johannesburg' }))}</p>
-          ${payout.payout_reference ? `<p><strong>Reference:</strong> ${escapeHtml(payout.payout_reference)}</p>` : ''}
-          ${payout.failure_reason ? `<p><strong>Details:</strong> ${escapeHtml(payout.failure_reason)}</p>` : ''}
-        </div>
-      `).join('') : '<p>No bank payouts have been recorded yet.</p>'}
+      ${payoutError ? '<p>Payout history is temporarily unavailable.</p>' : (payoutHistory || []).length ? (payoutHistory || []).map((payout) =>
+        '<div class="card">' +
+          '<p><strong>Amount:</strong> ' + money(payout.amount) + '</p>' +
+          '<p><strong>Status:</strong> ' + escapeHtml(payout.status) + '</p>' +
+          '<p><strong>Scheduled:</strong> ' + escapeHtml(new Date(payout.scheduled_for).toLocaleString('en-ZA', { timeZone: 'Africa/Johannesburg' })) + '</p>' +
+          (payout.payout_reference ? '<p><strong>Reference:</strong> ' + escapeHtml(payout.payout_reference) + '</p>' : '') +
+          (payout.failure_reason ? '<p><strong>Details:</strong> ' + escapeHtml(payout.failure_reason) + '</p>' : '') +
+        '</div>'
+      ).join('') : '<p>No bank payouts have been recorded yet.</p>'}
 
       <p class="small-note">Mr Away Fix is preparing Tuesday payouts. Automatic bank transfers are not active yet; only confirmed transfers will show as paid.</p>
 
