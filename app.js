@@ -742,13 +742,58 @@ async function loadProviderDashboard() {
     return;
   }
 
+  // Restore the saved provider profile for this signed-in user.
+  ensureProviderPhoneInput();
+
+  const { data: savedProvider, error: savedProviderError } = await supabase
+    .from("service_providers")
+    .select("business_name, service_type, location, phone")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (savedProviderError) {
+    console.error("Could not load saved provider profile:", savedProviderError);
+  }
+
+  if (savedProvider) {
+    const nameInput = $("providerName");
+    const serviceInput = $("providerService");
+    const areaInput = $("providerArea");
+    const phoneInput = $("providerPhone");
+
+    if (nameInput && !nameInput.value.trim()) {
+      nameInput.value = savedProvider.business_name || "";
+    }
+
+    if (serviceInput && !serviceInput.value.trim()) {
+      const savedService = savedProvider.service_type || "";
+      const options = Array.from(serviceInput.options || []);
+      const match = options.find((option) =>
+        option.value === savedService ||
+        option.textContent.trim() === savedService
+      ) || options.find((option) =>
+        savedService.toLowerCase().includes(option.value.toLowerCase()) ||
+        savedService.toLowerCase().includes(option.textContent.toLowerCase()) ||
+        option.value.toLowerCase().includes(savedService.toLowerCase()) ||
+        option.textContent.toLowerCase().includes(savedService.toLowerCase())
+      );
+      if (match) serviceInput.value = match.value;
+    }
+
+    if (areaInput && !areaInput.value.trim()) {
+      areaInput.value = savedProvider.location || "";
+    }
+
+    if (phoneInput && !phoneInput.value.trim()) {
+      phoneInput.value = savedProvider.phone || "";
+    }
+  }
+
   const providerName = $("providerName")?.value.trim() || "";
   const providerService =
     $("providerService")?.value.trim() || "";
   const providerArea =
     $("providerArea")?.value.trim() || "";
-
-  ensureProviderPhoneInput();
 
   if (!providerName || !providerService || !providerArea) {
     jobsList.innerHTML = `
