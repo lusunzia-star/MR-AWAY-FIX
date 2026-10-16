@@ -2,7 +2,7 @@ import { supabase } from "./supabaseClient.js";
 
 /*
 ==========================================================
-MR AWAY FIX — COMPLETE app.js
+MR AWAY FIX â€” COMPLETE app.js
 ==========================================================
 This is the complete browser-side application file.
 
@@ -36,13 +36,18 @@ IMPORTANT:
 const COMMISSION_RATE = 10;
 
 const SERVICE_RANGES = {
-  Plumbing: [450, 900],
-  Electrical: [450, 1000],
-  Painting: [600, 2500],
-  Cleaning: [300, 900],
-  Gardening: [350, 1200],
-  "Home Repairs": [400, 1200],
-  Other: [400, 1200],
+  Plumbing: [300, 900],
+  Electrical: [300, 1000],
+  Painting: [300, 1500],
+  Cleaning: [100, 500],
+  Gardening: [100, 500],
+  Moving: [300, 1200],
+  "Home Repairs": [300, 900],
+  Repairs: [300, 900],
+  "Hair & Beauty": [100, 500],
+  "IT & Design": [100, 600],
+  Media: [100, 600],
+  Other: [100, 500],
 };
 
 const $ = (id) => document.getElementById(id);
@@ -891,7 +896,7 @@ async function loadProviderDashboard() {
           <p>
             <strong>MR AWAY FIX estimate:</strong>
             ${money(job.estimate_min || job.job_amount)}
-            –
+            â€“
             ${money(job.estimate_max || job.job_amount)}
           </p>
 
@@ -969,7 +974,7 @@ async function loadProviderDashboard() {
         <p>
           <strong>Estimate:</strong>
           ${money(job.estimate_min || job.job_amount)}
-          –
+          â€“
           ${money(job.estimate_max || job.job_amount)}
         </p>
 
@@ -1520,7 +1525,7 @@ async function loadCustomerDashboard() {
 
     const estimateText =
       job.estimate_min != null && job.estimate_max != null
-        ? `${money(job.estimate_min)} – ${money(job.estimate_max)}`
+        ? `${money(job.estimate_min)} â€“ ${money(job.estimate_max)}`
         : money(job.job_amount);
 
     html += `
@@ -2513,6 +2518,6 @@ async function refreshAllScreens() {
   }
 
   console.log(
-    "MR AWAY FIX COMPLETE APP.JS LOADED — MARKETPLACE VERSION"
+    "MR AWAY FIX COMPLETE APP.JS LOADED â€” MARKETPLACE VERSION"
   );
 })();
