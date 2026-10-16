@@ -840,6 +840,12 @@ async function loadProviderDashboard() {
 
   if (payoutError) console.warn("Payout history could not load:", payoutError);
 
+  const pendingPayouts = (payoutHistory || []).filter((p) => p.status === "pending");
+  const pendingPayoutTotal = pendingPayouts.reduce((sum, p) => sum + Number(p.amount || 0), 0);
+  const nextPendingPayout = pendingPayouts
+    .slice()
+    .sort((a, b) => new Date(a.scheduled_for) - new Date(b.scheduled_for))[0] || null;
+
   const { data: availableJobs, error: jobsError } =
     await supabase
       .from("service_requests")
@@ -889,6 +895,10 @@ async function loadProviderDashboard() {
       <h3>Online earnings</h3>
       <p><strong>Provider share allocated through Paystack:</strong> ${money(onlineTotal)}</p>
       <p class="small-note">This figure records your share of successful online job payments. It does not by itself confirm that the money has reached your bank account.</p>
+
+      <h3>Upcoming bank payout</h3>
+      <p><strong>Queued for payout:</strong> ${money(pendingPayoutTotal)}</p>
+      ${nextPendingPayout ? '<p><strong>Scheduled:</strong> ' + escapeHtml(new Date(nextPendingPayout.scheduled_for).toLocaleString('en-ZA', { timeZone: 'Africa/Johannesburg' })) + '</p><p><strong>Status:</strong> Pending — bank transfer not yet confirmed</p>' : '<p>No upcoming payout is currently queued.</p>'}
 
       <h3>Bank payout history</h3>
       ${payoutError ? '<p>Payout history is temporarily unavailable.</p>' : (payoutHistory || []).length ? (payoutHistory || []).map((payout) =>
