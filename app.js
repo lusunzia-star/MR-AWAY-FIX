@@ -814,6 +814,32 @@ async function loadProviderDashboard() {
   const limit = Number(wallet.cash_debt_limit || 500);
   const cashPaused = owed >= limit;
 
+  // Online provider allocations and bank payout history are displayed separately
+  // so a Paystack split is never misrepresented as a confirmed bank deposit.
+  const { data: onlineEarnings, error: earningsError } = await supabase
+    .from("job_payments")
+    .select("id, request_id, job_amount, provider_amount, payment_status, paid_at, paystack_reference")
+    .eq("provider_user_id", user.id)
+    .in("payment_method", ["online", "paystack"])
+    .eq("payment_status", "paid")
+    .order("paid_at", { ascending: false })
+    .limit(100);
+
+  if (earningsError) console.warn("Online wallet earnings could not load:", earningsError);
+
+  const onlineTotal = (onlineEarnings || []).reduce(
+    (sum, item) => sum + Number(item.provider_amount || 0), 0
+  );
+
+  const { data: payoutHistory, error: payoutError } = await supabase
+    .from("provider_payouts")
+    .select("id, amount, status, scheduled_for, created_at, paid_at, payout_reference, failure_reason")
+    .eq("provider_user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(10);
+
+  if (payoutError) console.warn("Payout history could not load:", payoutError);
+
   const { data: availableJobs, error: jobsError } =
     await supabase
       .from("service_requests")
@@ -858,6 +884,24 @@ async function loadProviderDashboard() {
         <strong>Total commission paid:</strong>
         ${money(wallet.total_commission_paid)}
       </p>
+
+      <hr>
+      <h3>Online earnings</h3>
+      <p><strong>Provider share allocated through Paystack:</strong> ${money(onlineTotal)}</p>
+      <p class="small-note">This figure records your share of successful online job payments. It does not by itself confirm that the money has reached your bank account.</p>
+
+      <h3>Bank payout history</h3>
+      ${payoutError ? '<p>Payout history is temporarily unavailable.</p>' : (payoutHistory || []).length ? (payoutHistory || []).map((payout) => `
+        <div class="card">
+          <p><strong>Amount:</strong> ${money(payout.amount)}</p>
+          <p><strong>Status:</strong> ${escapeHtml(payout.status)}</p>
+          <p><strong>Scheduled:</strong> ${escapeHtml(new Date(payout.scheduled_for).toLocaleString('en-ZA', { timeZone: 'Africa/Johannesburg' }))}</p>
+          ${payout.payout_reference ? `<p><strong>Reference:</strong> ${escapeHtml(payout.payout_reference)}</p>` : ''}
+          ${payout.failure_reason ? `<p><strong>Details:</strong> ${escapeHtml(payout.failure_reason)}</p>` : ''}
+        </div>
+      `).join('') : '<p>No bank payouts have been recorded yet.</p>'}
+
+      <p class="small-note">Mr Away Fix is preparing Tuesday payouts. Automatic bank transfers are not active yet; only confirmed transfers will show as paid.</p>
 
       <p>
         <strong>Cash-job limit:</strong>
