@@ -2448,7 +2448,7 @@ async function loadProviderReviews() {
             </p>
 
             <p>
-              ${"".repeat(
+              ${"★".repeat(
                 Math.max(
                   1,
                   Math.min(5, Number(review.rating))
