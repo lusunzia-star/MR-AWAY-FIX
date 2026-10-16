@@ -767,17 +767,16 @@ async function loadProviderDashboard() {
 
     if (serviceInput && !serviceInput.value.trim()) {
       const savedService = savedProvider.service_type || "";
-      const options = Array.from(serviceInput.options || []);
-      const match = options.find((option) =>
-        option.value === savedService ||
-        option.textContent.trim() === savedService
-      ) || options.find((option) =>
-        savedService.toLowerCase().includes(option.value.toLowerCase()) ||
-        savedService.toLowerCase().includes(option.textContent.toLowerCase()) ||
-        option.value.toLowerCase().includes(savedService.toLowerCase()) ||
-        option.textContent.toLowerCase().includes(savedService.toLowerCase())
-      );
-      if (match) serviceInput.value = match.value;
+      if (serviceInput.tagName === "SELECT") {
+        const options = Array.from(serviceInput.options || []);
+        const match = options.find((option) =>
+          option.value === savedService ||
+          option.textContent.trim() === savedService
+        );
+        if (match) serviceInput.value = match.value;
+      } else {
+        serviceInput.value = savedService;
+      }
     }
 
     if (areaInput && !areaInput.value.trim()) {
