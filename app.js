@@ -100,6 +100,32 @@ async function currentUser() {
 
 let authMode = "signin";
 
+function ensureAccountRoleChoice() {
+  const password = $("authPassword");
+  if (!password) return null;
+
+  let wrap = $("accountRoleChoice");
+  if (!wrap) {
+    wrap = document.createElement("div");
+    wrap.id = "accountRoleChoice";
+    wrap.style.margin = "12px 0";
+    wrap.innerHTML = `
+      <label for="accountRole" style="display:block;font-weight:600;margin-bottom:6px;">
+        I want to use MR AWAY FIX as:
+      </label>
+      <select id="accountRole" style="width:100%;padding:12px;border:1px solid #d1d5db;border-radius:8px;">
+        <option value="customer">Customer — I need a service</option>
+        <option value="provider">Service provider — I offer a service</option>
+      </select>
+      <p style="font-size:.9rem;opacity:.8;margin-top:6px;">
+        Choose the account type you want to create.
+      </p>
+    `;
+    password.insertAdjacentElement("afterend", wrap);
+  }
+  return wrap;
+}
+
 function showAuthBox(mode = "signin") {
   authMode = mode;
 
@@ -120,6 +146,16 @@ function showAuthBox(mode = "signin") {
       mode === "signup"
         ? "I already have an account"
         : "Create a new account";
+  }
+
+  const roleChoice = ensureAccountRoleChoice();
+  if (roleChoice) {
+    roleChoice.style.display = mode === "signup" ? "block" : "none";
+  }
+
+  if ($("authPassword")) {
+    $("authPassword").autocomplete =
+      mode === "signup" ? "new-password" : "current-password";
   }
 
   if ($("authStatus")) {
@@ -161,9 +197,14 @@ async function handleAuthSubmit() {
   if (status) status.textContent = "Please wait...";
 
   if (authMode === "signup") {
+    const role = $("accountRole")?.value === "provider" ? "provider" : "customer";
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        data: { role },
+      },
     });
 
     if (error) {
@@ -172,15 +213,20 @@ async function handleAuthSubmit() {
     }
 
     if (data?.user) {
-      await supabase.from("profiles").upsert({
+      const { error: profileError } = await supabase.from("profiles").upsert({
         id: data.user.id,
-        role: "customer",
+        role,
       });
+
+      if (profileError) {
+        console.warn("Account created; profile role could not be saved yet:", profileError);
+      }
     }
 
     if (status) {
       status.textContent =
-        "Account created. Please check your email to confirm your account, then sign in.";
+        "Account created as " + (role === "provider" ? "a service provider" : "a customer") +
+        ". Please check your email to confirm your account, then sign in.";
     }
 
     return;
@@ -196,11 +242,18 @@ async function handleAuthSubmit() {
     return;
   }
 
+  let role = data?.user?.user_metadata?.role || "customer";
+
   if (data?.user) {
-    await supabase.from("profiles").upsert({
-      id: data.user.id,
-      role: "customer",
-    });
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", data.user.id)
+      .maybeSingle();
+
+    if (!profileError && profile?.role) {
+      role = profile.role;
+    }
   }
 
   if (status) status.textContent = "Signed in successfully.";
@@ -208,6 +261,21 @@ async function handleAuthSubmit() {
   hideAuthBox();
   await updateAccountButton(data?.user);
   await refreshAllScreens();
+
+  if (role === "provider") {
+    services?.classList.add("hidden");
+    requestBox?.classList.add("hidden");
+    provider?.classList.remove("hidden");
+    providerJobs?.classList.remove("hidden");
+    ensureProviderPhoneInput();
+    provider?.scrollIntoView({ behavior: "smooth" });
+    await loadProviderDashboard();
+  } else {
+    provider?.classList.add("hidden");
+    providerJobs?.classList.add("hidden");
+    services?.classList.remove("hidden");
+    services?.scrollIntoView({ behavior: "smooth" });
+  }
 }
 
 $("loginBtn")?.addEventListener("click", async () => {
