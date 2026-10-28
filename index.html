@@ -195,51 +195,52 @@
     class="card hidden"
   >
     <h2 id="authTitle">Sign in</h2>
+    <p id="authIntro">Sign in to manage your service requests and jobs.</p>
 
-    <p>
-      Sign in to manage your service requests and jobs.
-    </p>
+    <div id="signupRoleWrap" class="hidden">
+      <label for="signupRole">I want to register as</label>
+      <select id="signupRole">
+        <option value="customer">Customer — I need a service</option>
+        <option value="provider">Service Provider — I offer services</option>
+      </select>
+    </div>
 
-    <input
-      id="authEmail"
-      type="email"
-      placeholder="Email address"
-      autocomplete="email"
-    >
+    <div id="customerSignupFields" class="hidden">
+      <h3>Customer details</h3>
+      <label for="customerFirstName">First name</label>
+      <input id="customerFirstName" type="text" autocomplete="given-name" placeholder="First name">
+      <label for="customerSurname">Surname</label>
+      <input id="customerSurname" type="text" autocomplete="family-name" placeholder="Surname">
+      <label for="customerPhone">Cell phone number</label>
+      <input id="customerPhone" type="tel" autocomplete="tel" placeholder="e.g. 071 234 5678">
+      <label for="customerAddress">Residential address or area</label>
+      <input id="customerAddress" type="text" autocomplete="street-address" placeholder="Your address or area">
+      <p class="small-note">Only provide an address you are comfortable sharing with MR AWAY FIX. Your South African ID number is not required for this registration.</p>
+    </div>
 
-    <input
-      id="authPassword"
-      type="password"
-      placeholder="Password"
-      autocomplete="current-password"
-    >
+    <div id="providerSignupFields" class="hidden">
+      <h3>Service provider details</h3>
+      <label for="signupProviderName">Full name or business name</label>
+      <input id="signupProviderName" type="text" autocomplete="organization" placeholder="Your name or business name">
+      <label for="signupProviderService">Service you provide</label>
+      <input id="signupProviderService" type="text" placeholder="e.g. Plumbing, cleaning, repairs">
+      <label for="signupProviderArea">Service area</label>
+      <input id="signupProviderArea" type="text" placeholder="e.g. Krugersdorp">
+      <label for="signupProviderPhone">Cell phone number</label>
+      <input id="signupProviderPhone" type="tel" autocomplete="tel" placeholder="e.g. 071 234 5678">
+    </div>
 
-    <button
-      id="authSubmit"
-      type="button"
-    >
-      Sign in
-    </button>
+    <label for="authEmail">Email address</label>
+    <input id="authEmail" type="email" placeholder="Email address" autocomplete="email">
 
-    <button
-      id="switchAuth"
-      type="button"
-      class="outline"
-    >
-      Create a new account
-    </button>
+    <label for="authPassword">Password</label>
+    <input id="authPassword" type="password" placeholder="Password (at least 6 characters)" autocomplete="new-password">
 
-    <button
-      id="closeAuth"
-      type="button"
-      class="outline"
-    >
-      Cancel
-    </button>
-
-    <p id="authStatus"></p>
+    <button id="authSubmit" type="button">Sign in</button>
+    <button id="switchAuth" type="button" class="outline">Create a new account</button>
+    <button id="closeAuth" type="button" class="outline">Cancel</button>
+    <p id="authStatus" aria-live="polite"></p>
   </section>
-
   <main>
 
     <section
