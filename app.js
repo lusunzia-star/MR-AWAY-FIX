@@ -100,31 +100,26 @@ async function currentUser() {
 
 let authMode = "signin";
 
+function updateSignupFields() {
+  const role = $("signupRole")?.value || "customer";
+  $("customerSignupFields")?.classList.toggle("hidden", authMode !== "signup" || role !== "customer");
+  $("providerSignupFields")?.classList.toggle("hidden", authMode !== "signup" || role !== "provider");
+  $("signupRoleWrap")?.classList.toggle("hidden", authMode !== "signup");
+}
+
 function showAuthBox(mode = "signin") {
   authMode = mode;
-
   $("authBox")?.classList.remove("hidden");
 
-  if ($("authTitle")) {
-    $("authTitle").textContent =
-      mode === "signup" ? "Create your account" : "Sign in";
-  }
-
-  if ($("authSubmit")) {
-    $("authSubmit").textContent =
-      mode === "signup" ? "Create account" : "Sign in";
-  }
-
-  if ($("switchAuth")) {
-    $("switchAuth").textContent =
-      mode === "signup"
-        ? "I already have an account"
-        : "Create a new account";
-  }
-
-  if ($("authStatus")) {
-    $("authStatus").textContent = "";
-  }
+  if ($("authTitle")) $("authTitle").textContent = mode === "signup" ? "Create your account" : "Sign in";
+  if ($("authIntro")) $("authIntro").textContent = mode === "signup"
+    ? "Choose whether you need a service or want to offer services. Each role has its own registration details."
+    : "Sign in to manage your service requests and jobs.";
+  if ($("authSubmit")) $("authSubmit").textContent = mode === "signup" ? "Create account" : "Sign in";
+  if ($("switchAuth")) $("switchAuth").textContent = mode === "signup" ? "I already have an account" : "Create a new account";
+  if ($("authPassword")) $("authPassword").setAttribute("autocomplete", mode === "signup" ? "new-password" : "current-password");
+  if ($("authStatus")) $("authStatus").textContent = "";
+  updateSignupFields();
 }
 
 function hideAuthBox() {
@@ -134,36 +129,52 @@ function hideAuthBox() {
 async function updateAccountButton(user = null) {
   const button = $("loginBtn");
   if (!button) return;
-
-  if (!user) {
-    button.textContent = "Sign in";
-    return;
-  }
-
-  button.textContent = "Account";
+  button.textContent = user ? "Account" : "Sign in";
 }
 
 async function handleAuthSubmit() {
   const email = $("authEmail")?.value.trim();
-  const password = $("authPassword")?.value;
+  const password = $("authPassword")?.value || "";
   const status = $("authStatus");
 
   if (!email || !password) {
     if (status) status.textContent = "Enter your email and password.";
     return;
   }
-
   if (password.length < 6) {
     if (status) status.textContent = "Password must be at least 6 characters.";
     return;
   }
-
   if (status) status.textContent = "Please wait...";
 
   if (authMode === "signup") {
+    const role = $("signupRole")?.value || "customer";
+    let profile = { role };
+
+    if (role === "customer") {
+      profile.first_name = $("customerFirstName")?.value.trim() || "";
+      profile.last_name = $("customerSurname")?.value.trim() || "";
+      profile.phone = $("customerPhone")?.value.trim() || "";
+      profile.address = $("customerAddress")?.value.trim() || "";
+      if (!profile.first_name || !profile.last_name || !profile.phone || !profile.address) {
+        if (status) status.textContent = "Please complete your name, surname, phone number and address/area.";
+        return;
+      }
+    } else {
+      profile.provider_name = $("signupProviderName")?.value.trim() || "";
+      profile.service_type = $("signupProviderService")?.value.trim() || "";
+      profile.service_area = $("signupProviderArea")?.value.trim() || "";
+      profile.phone = $("signupProviderPhone")?.value.trim() || "";
+      if (!profile.provider_name || !profile.service_type || !profile.service_area || !profile.phone) {
+        if (status) status.textContent = "Please complete your name/business name, service, service area and phone number.";
+        return;
+      }
+    }
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
+      options: { data: profile },
     });
 
     if (error) {
@@ -172,43 +183,44 @@ async function handleAuthSubmit() {
     }
 
     if (data?.user) {
-      await supabase.from("profiles").upsert({
+      const { error: profileError } = await supabase.from("profiles").upsert({
         id: data.user.id,
-        role: "customer",
-      });
+        role,
+      }, { onConflict: "id" });
+      if (profileError) {
+        console.warn("Profile role could not be saved; signup metadata is retained:", profileError);
+      }
     }
 
     if (status) {
-      status.textContent =
-        "Account created. Please check your email to confirm your account, then sign in.";
+      status.textContent = "Account created. Please check your email to confirm your account, then sign in. Your selected role and details are saved with your account.";
     }
-
     return;
   }
 
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
-
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) {
     if (status) status.textContent = errorText(error);
     return;
   }
 
-  if (data?.user) {
-    await supabase.from("profiles").upsert({
-      id: data.user.id,
-      role: "customer",
-    });
-  }
-
   if (status) status.textContent = "Signed in successfully.";
-
   hideAuthBox();
   await updateAccountButton(data?.user);
   await refreshAllScreens();
+
+  const meta = data?.user?.user_metadata || {};
+  if (meta.role === "provider") {
+    if ($("providerName") && meta.provider_name) $("providerName").value = meta.provider_name;
+    if ($("providerService") && meta.service_type) $("providerService").value = meta.service_type;
+    if ($("providerArea") && meta.service_area) $("providerArea").value = meta.service_area;
+    if ($("providerPhone") && meta.phone) $("providerPhone").value = meta.phone;
+    $("provider")?.classList.remove("hidden");
+    $("provider")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 }
+
+$("signupRole")?.addEventListener("change", updateSignupFields);
 
 $("loginBtn")?.addEventListener("click", async () => {
   const user = await currentUser();
