@@ -688,7 +688,7 @@ $("saveProvider")?.addEventListener("click", async () => {
         location: area,
         phone,
         available: true,
-        verified: false,
+        verified: true,
       });
   }
 
@@ -2307,8 +2307,8 @@ async function loadProviderProfiles() {
           <p>
             ${
               item.verified
-                ? " Verified provider"
-                : "Provider verification pending"
+                ? "Provider approved — you can start working with us!"
+                : "Provider account active"
             }
           </p>
 
