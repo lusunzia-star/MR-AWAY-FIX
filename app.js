@@ -308,13 +308,29 @@ function cleanPhone(phone) {
    ========================================================= */
 
 customerBtn?.addEventListener("click", async () => {
+  const user = await currentUser();
+  if (!user) {
+    showAuthBox("signin");
+    return;
+  }
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (profile?.role !== "customer") {
+    alert("The customer area is available to customer accounts. Please use your provider dashboard.");
+    return;
+  }
+
   services?.classList.remove("hidden");
   provider?.classList.add("hidden");
   providerJobs?.classList.add("hidden");
-
+  $("providerProfiles")?.classList.remove("hidden");
   services?.scrollIntoView({ behavior: "smooth" });
 
   ensureCustomerPaymentUI();
+  await loadProviderProfiles();
   await loadCustomerDashboard();
 });
 
@@ -329,6 +345,7 @@ providerBtn?.addEventListener("click", async () => {
   services?.classList.add("hidden");
   provider?.classList.remove("hidden");
   providerJobs?.classList.remove("hidden");
+  $("providerProfiles")?.classList.add("hidden");
 
   ensureProviderPhoneInput();
 
@@ -2245,6 +2262,22 @@ async function loadProviderProfiles() {
   const list = $("providerProfilesList");
 
   if (!box || !list) return;
+
+  const user = await currentUser();
+  if (!user) {
+    box.classList.add("hidden");
+    return;
+  }
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (profile?.role !== "customer") {
+    box.classList.add("hidden");
+    list.innerHTML = "";
+    return;
+  }
 
   const { data, error } = await supabase
     .from("service_providers")
