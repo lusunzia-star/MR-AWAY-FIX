@@ -2714,7 +2714,16 @@ async function refreshAllScreens() {
 (async function initializeMRAwayFix() {
   ensureCustomerPaymentUI();
 
-  const user = await currentUser();
+  // Restore the locally persisted Supabase session before deciding
+  // which role dashboard should be displayed on a page refresh.
+  const { data: sessionData, error: sessionError } =
+    await supabase.auth.getSession();
+
+  if (sessionError) {
+    console.error("Could not restore sign-in session:", sessionError);
+  }
+
+  const user = sessionData?.session?.user || await currentUser();
 
   await updateAccountButton(user);
 
@@ -2723,6 +2732,6 @@ async function refreshAllScreens() {
   }
 
   console.log(
-    "MR AWAY FIX COMPLETE APP.JS LOADED — MARKETPLACE VERSION"
+    "MR AWAY FIX COMPLETE APP.JS LOADED — AUTOMATIC ROLE DASHBOARDS"
   );
 })();
