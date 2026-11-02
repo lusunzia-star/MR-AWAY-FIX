@@ -2671,7 +2671,14 @@ document.addEventListener("click", (event) => {
 function setProviderTab(tab) {
   const dashboard = $("providerDashboard");
   const panels = [$("provider"), $("providerJobs"), $("jobHistory"), $("notifications")];
-  panels.forEach((panel) => { if (panel) { panel.classList.add("hidden"); panel.setAttribute("hidden", ""); panel.style.setProperty("display", "none", "important"); } });
+  panels.forEach((panel) => {
+    if (panel) {
+      panel.classList.add("hidden");
+      panel.hidden = true;
+      panel.setAttribute("hidden", "");
+      panel.style.setProperty("display", "none", "important");
+    }
+  });
   dashboard?.classList.remove("hidden");
   $("providerWalletPanel")?.classList.add("hidden");
   $("providerAvailableJobs")?.classList.add("hidden");
@@ -2679,12 +2686,26 @@ function setProviderTab(tab) {
   dashboard?.querySelector(".provider-shortcuts")?.classList.toggle("hidden", tab !== "home");
   dashboard?.querySelector(".provider-home-tip")?.classList.toggle("hidden", tab !== "home");
   if (tab === "available") {
+    const historyPanel = $("jobHistory");
+    if (historyPanel) {
+      historyPanel.hidden = true;
+      historyPanel.setAttribute("hidden", "");
+      historyPanel.classList.add("hidden");
+      historyPanel.style.setProperty("display", "none", "important");
+    }
     $("providerJobs")?.classList.remove("hidden");
     $("providerJobs")?.removeAttribute("hidden");
     if ($("providerJobs")) $("providerJobs").style.removeProperty("display");
     $("providerAvailableJobs")?.classList.remove("hidden");
     $("providerJobs")?.scrollIntoView({ behavior: "smooth", block: "start" });
   } else if (tab === "myjobs") {
+    const historyPanel = $("jobHistory");
+    if (historyPanel) {
+      historyPanel.hidden = false;
+      historyPanel.removeAttribute("hidden");
+      historyPanel.classList.remove("hidden");
+      historyPanel.style.removeProperty("display");
+    }
     $("jobHistory")?.classList.remove("hidden");
     $("jobHistory")?.removeAttribute("hidden");
     if ($("jobHistory")) $("jobHistory").style.removeProperty("display");
