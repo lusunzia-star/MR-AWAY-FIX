@@ -2770,8 +2770,8 @@ async function refreshAllScreens() {
   if (["provider", "service_provider"].includes(accountRole)) {
     $("providerDashboard")?.classList.remove("hidden");
     $("customerDashboard")?.classList.add("hidden");
-    document.querySelectorAll(".public-section").forEach((section) => section.classList.remove("hidden"));
-    document.querySelector(".site-nav")?.classList.remove("hidden");
+    document.querySelectorAll(".public-section").forEach((section) => section.classList.add("hidden"));
+    document.querySelector(".site-nav")?.classList.add("hidden");
     customerInfo?.classList.add("hidden");
     providerInfo?.classList.remove("hidden");
     customerPanel?.classList.add("hidden");
