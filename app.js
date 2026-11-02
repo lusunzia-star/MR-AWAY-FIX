@@ -2643,8 +2643,12 @@ async function refreshAllScreens() {
 
   const customerPanel = $("customerRequestsPanel");
   const customerResponses = $("customerResponses");
+  const customerInfo = $("customers");
+  const providerInfo = $("providers");
 
   if (!user) {
+    customerInfo?.classList.remove("hidden");
+    providerInfo?.classList.remove("hidden");
     customerPanel?.classList.add("hidden");
     customerResponses?.classList.add("hidden");
     services?.classList.add("hidden");
@@ -2670,6 +2674,8 @@ async function refreshAllScreens() {
   ensureCustomerPaymentUI();
 
   if (profile?.role === "customer") {
+    customerInfo?.classList.remove("hidden");
+    providerInfo?.classList.add("hidden");
     customerPanel?.classList.remove("hidden");
     services?.classList.add("hidden");
     provider?.classList.add("hidden");
@@ -2686,6 +2692,8 @@ async function refreshAllScreens() {
   }
 
   if (profile?.role === "provider") {
+    customerInfo?.classList.add("hidden");
+    providerInfo?.classList.remove("hidden");
     customerPanel?.classList.add("hidden");
     customerResponses?.classList.add("hidden");
     services?.classList.add("hidden");
