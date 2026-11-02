@@ -902,8 +902,9 @@ async function loadProviderDashboard() {
   });
 
   let html = `
+    <section id="providerWalletPanel" class="provider-screen-panel">
     <div class="card">
-      <h2>Provider Wallet</h2>
+      <h2>Cash &amp; Earnings</h2>
 
       <p>
         <strong>Commission owed:</strong>
@@ -981,6 +982,9 @@ async function loadProviderDashboard() {
       }
     </div>
 
+    </div>
+    </section>
+    <section id="providerAvailableJobs" class="provider-screen-panel">
     <h2>Available Jobs</h2>
   `;
 
@@ -1283,6 +1287,7 @@ async function loadProviderDashboard() {
     html += `</div>`;
   }
 
+  html += "</section>";
   jobsList.innerHTML = html;
 
   bindProviderButtons(user);
@@ -2666,18 +2671,23 @@ function setProviderTab(tab) {
   const panels = [$("provider"), $("providerJobs"), $("jobHistory"), $("notifications")];
   panels.forEach((panel) => panel?.classList.add("hidden"));
   dashboard?.classList.remove("hidden");
+  $("providerWalletPanel")?.classList.add("hidden");
+  $("providerAvailableJobs")?.classList.add("hidden");
   dashboard?.querySelector(".provider-welcome")?.classList.toggle("hidden", tab !== "home");
   dashboard?.querySelector(".provider-shortcuts")?.classList.toggle("hidden", tab !== "home");
   dashboard?.querySelector(".provider-home-tip")?.classList.toggle("hidden", tab !== "home");
   if (tab === "available") {
     $("providerJobs")?.classList.remove("hidden");
+    $("providerAvailableJobs")?.classList.remove("hidden");
     $("providerJobs")?.scrollIntoView({ behavior: "smooth", block: "start" });
   } else if (tab === "myjobs") {
     $("providerJobs")?.classList.remove("hidden");
+    $("providerAvailableJobs")?.classList.remove("hidden");
     $("jobHistory")?.classList.remove("hidden");
     $("providerJobs")?.scrollIntoView({ behavior: "smooth", block: "start" });
   } else if (tab === "cash") {
     $("providerJobs")?.classList.remove("hidden");
+    $("providerWalletPanel")?.classList.remove("hidden");
     $("providerJobs")?.scrollIntoView({ behavior: "smooth", block: "start" });
   } else if (tab === "profile") {
     $("provider")?.classList.remove("hidden");
