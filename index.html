@@ -259,6 +259,25 @@
   </section>
   <main>
 
+  <section id="providerDashboard" class="provider-dashboard hidden" aria-label="Provider dashboard">
+    <div class="provider-welcome"><p class="dashboard-eyebrow">MR AWAY FIX PROVIDER HOME</p><h1>Welcome back!</h1><p>Find work and manage your services.</p></div>
+    <button type="button" class="provider-primary-action" data-provider-tab="available"><span class="provider-action-icon">⌕</span><span><strong>Find Available Jobs</strong><small>View customer requests near your service areas</small></span><span class="provider-action-arrow">›</span></button>
+    <div class="provider-shortcuts">
+      <button type="button" class="provider-shortcut" data-provider-tab="myjobs"><span class="provider-shortcut-icon">▤</span><span><strong>My Jobs</strong><small>Accepted, active and completed work</small></span><span class="provider-shortcut-arrow">›</span></button>
+      <button type="button" class="provider-shortcut" data-provider-tab="cash"><span class="provider-shortcut-icon">R</span><span><strong>Cash &amp; Earnings</strong><small>Cash job records and commission</small></span><span class="provider-shortcut-arrow">›</span></button>
+      <button type="button" class="provider-shortcut" data-provider-tab="profile"><span class="provider-shortcut-icon">♙</span><span><strong>My Provider Profile</strong><small>Services, contact number and areas</small></span><span class="provider-shortcut-arrow">›</span></button>
+    </div>
+    <div class="provider-home-tip"><strong>Helpful tip</strong><p>Respond quickly to suitable jobs and agree the final price with the customer before starting work.</p></div>
+    <nav class="provider-bottom-nav" aria-label="Provider dashboard">
+      <button type="button" class="active" data-provider-tab="home"><span>⌂</span>Home</button>
+      <button type="button" data-provider-tab="available"><span>⌕</span>Available</button>
+      <button type="button" data-provider-tab="myjobs"><span>▤</span>My Jobs</button>
+      <button type="button" data-provider-tab="cash"><span>R</span>Cash</button>
+      <button type="button" data-provider-tab="profile"><span>♙</span>Profile</button>
+    </nav>
+  </section>
+
+
   <section id="customerDashboard" class="customer-dashboard hidden" aria-label="Customer dashboard">
     <div class="customer-home-content">
     <div class="customer-welcome"><p class="dashboard-eyebrow">MR AWAY FIX CUSTOMER HOME</p><h1>Welcome back!</h1><p>What can we help you get fixed today?</p></div>
@@ -956,8 +975,8 @@
 
   <script
     type="module"
-    src="app.js?v=23"
-    onload="console.log('MR AWAY FIX APP.JS LOADED v23')"
+    src="app.js?v=24"
+    onload="console.log('MR AWAY FIX APP.JS LOADED v24')"
     onerror="alert('APP.JS FILE NOT FOUND OR MODULE ERROR')"
   ></script>
 
