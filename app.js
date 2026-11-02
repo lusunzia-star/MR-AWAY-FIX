@@ -1062,235 +1062,20 @@ async function loadProviderDashboard() {
     });
   }
 
-  html += `
-    <h2 style="margin-top:30px;">
-      My Jobs
-    </h2>
-  `;
-
-  if (!responses.length) {
-    html += `
-      <div class="card">
-        <p>You have not requested any jobs yet.</p>
-      </div>
-    `;
-  }
-
-  for (const response of responses) {
-    const { data: job } = await supabase
-      .from("service_requests")
-      .select("*")
-      .eq("id", response.request_id)
-      .maybeSingle();
-
-    if (!job) continue;
-
-    const { data: payment } = await supabase
-      .from("job_payments")
-      .select("*")
-      .eq("request_id", job.id)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    const cashJob = job.payment_method === "cash";
-
-    html += `
-      <div class="job-card">
-
-        <h3> ${escapeHtml(job.service_type)}</h3>
-
-        <p>${escapeHtml(job.description)}</p>
-
-        <p> ${escapeHtml(job.location)}</p>
-
-        <p>
-          <strong>Estimate:</strong>
-          ${money(job.estimate_min || job.job_amount)}
-          –
-          ${money(job.estimate_max || job.job_amount)}
-        </p>
-
-        ${
-          job.final_amount
-            ? `
-              <p>
-                <strong>Final amount:</strong>
-                ${money(job.final_amount)}
-              </p>
-            `
-            : ""
-        }
-
-        <p>
-          <strong>Payment:</strong>
-          ${cashJob ? " Cash" : " Online"}
-        </p>
-
-        <p>
-          <strong>Your response:</strong>
-          ${escapeHtml(response.status)}
-        </p>
-
-        <p>
-          <strong>Job status:</strong>
-          ${escapeHtml(job.status)}
-        </p>
-    `;
-
-    if (
-      response.status === "pending" &&
-      job.status === "posted"
-    ) {
-      html += `
-        <p>
-          Waiting for the customer to choose a provider.
-        </p>
-      `;
-    }
-
-    if (
-      response.status === "accepted" &&
-      job.status === "accepted"
-    ) {
-      if (job.final_amount_status === "customer_approved") {
-        html += `
-          <div class="card">
-            <p>
-              Customer approved final price:
-              <strong>${money(job.final_amount)}</strong>
-            </p>
-
-            <button
-              type="button"
-              class="mafStartJob"
-              data-request-id="${escapeHtml(job.id)}"
-            >
-              Start Job
-            </button>
-          </div>
-        `;
-      } else {
-        html += `
-          <div class="card">
-            <h4>Final Price</h4>
-
-            <p>
-              Enter the final amount after assessing the job.
-            </p>
-
-            <input
-              type="number"
-              min="1"
-              step="0.01"
-              class="mafFinalPrice"
-              data-request-id="${escapeHtml(job.id)}"
-              value="${escapeHtml(
-                job.final_amount ||
-                job.estimate_min ||
-                job.job_amount ||
-                ""
-              )}"
-            >
-
-            <button
-              type="button"
-              class="mafProposePrice"
-              data-request-id="${escapeHtml(job.id)}"
-            >
-              Send Final Price to Customer
-            </button>
-          </div>
-        `;
-      }
-    }
-
-    if (
-      response.status === "in_progress" &&
-      job.status === "in_progress"
-    ) {
-      html += `
-        <button
-          type="button"
-          class="mafCompleteJob"
-          data-request-id="${escapeHtml(job.id)}"
-        >
-          Complete Job
-        </button>
-      `;
-    }
-
-    if (job.status === "completed") {
-      if (payment?.payment_status === "paid") {
-        html += `
-          <div class="card">
-            <p>
-              <strong>Payment received.</strong>
-            </p>
-
-            <p>
-              ${
-                cashJob
-                  ? `Cash received. MR AWAY FIX commission: ${money(
-                      payment.commission_amount
-                    )}`
-                  : "Paid through Paystack."
-              }
-            </p>
-          </div>
-        `;
-      } else if (
-        cashJob &&
-        payment?.payment_status === "pending"
-      ) {
-        html += `
-          <div class="card">
-            <h4>Cash Payment</h4>
-
-            <p>
-              Customer has selected cash and marked the
-              cash payment as ready.
-            </p>
-
-            <p>
-              <strong>Cash amount:</strong>
-              ${money(payment.job_amount)}
-            </p>
-
-            <button
-              type="button"
-              class="mafConfirmCash"
-              data-request-id="${escapeHtml(job.id)}"
-            >
-              Confirm Cash Received
-            </button>
-          </div>
-        `;
-      } else if (cashJob) {
-        html += `
-          <div class="card">
-            <p>
-              Waiting for the customer to mark the cash
-              payment as ready.
-            </p>
-          </div>
-        `;
-      } else {
-        html += `
-          <div class="card">
-            <p>
-              Waiting for Paystack payment confirmation.
-            </p>
-          </div>
-        `;
-      }
-    }
-
-    html += `</div>`;
-  }
-
   html += "</section>";
   jobsList.innerHTML = html;
+
+  // Move generated provider screens out of the legacy wrapper.
+  const providerJobsPanel = $("providerJobs");
+  const walletPanel = $("providerWalletPanel");
+  const availablePanel = $("providerAvailableJobs");
+  if (providerJobsPanel && walletPanel && availablePanel) {
+    providerJobsPanel.insertAdjacentElement("afterend", walletPanel);
+    walletPanel.insertAdjacentElement("afterend", availablePanel);
+    providerJobsPanel.hidden = true;
+    providerJobsPanel.setAttribute("hidden", "");
+    providerJobsPanel.style.setProperty("display", "none", "important");
+  }
 
   bindProviderButtons(user);
 }
@@ -2670,71 +2455,39 @@ document.addEventListener("click", (event) => {
 /* PROVIDER DASHBOARD NAVIGATION */
 function setProviderTab(tab) {
   const dashboard = $("providerDashboard");
-  const panels = [$("provider"), $("providerJobs"), $("jobHistory"), $("notifications")];
-  panels.forEach((panel) => {
-    if (panel) {
-      panel.classList.add("hidden");
-      panel.hidden = true;
-      panel.setAttribute("hidden", "");
-      panel.style.setProperty("display", "none", "important");
-    }
+  const screens = [$("provider"), $("providerJobs"), $("jobHistory"), $("notifications"), $("providerWalletPanel"), $("providerAvailableJobs")];
+  screens.forEach((panel) => {
+    if (!panel) return;
+    panel.classList.add("hidden");
+    panel.hidden = true;
+    panel.setAttribute("hidden", "");
+    panel.style.setProperty("display", "none", "important");
   });
+
   dashboard?.classList.remove("hidden");
-  $("providerWalletPanel")?.classList.add("hidden");
-  $("providerAvailableJobs")?.classList.add("hidden");
   dashboard?.querySelector(".provider-welcome")?.classList.toggle("hidden", tab !== "home");
   dashboard?.querySelector(".provider-shortcuts")?.classList.toggle("hidden", tab !== "home");
   dashboard?.querySelector(".provider-home-tip")?.classList.toggle("hidden", tab !== "home");
-  if (tab === "available") {
-    const historyPanel = $("jobHistory");
-    if (historyPanel) {
-      historyPanel.hidden = true;
-      historyPanel.setAttribute("hidden", "");
-      historyPanel.classList.add("hidden");
-      historyPanel.style.setProperty("display", "none", "important");
-    }
-    $("providerJobs")?.classList.remove("hidden");
-    $("providerJobs")?.removeAttribute("hidden");
-    if ($("providerJobs")) $("providerJobs").style.removeProperty("display");
-    $("providerAvailableJobs")?.classList.remove("hidden");
-    $("providerJobs")?.scrollIntoView({ behavior: "smooth", block: "start" });
-  } else if (tab === "myjobs") {
-    const historyPanel = $("jobHistory");
-    if (historyPanel) {
-      historyPanel.hidden = false;
-      historyPanel.removeAttribute("hidden");
-      historyPanel.classList.remove("hidden");
-      historyPanel.style.removeProperty("display");
-    }
-    $("jobHistory")?.classList.remove("hidden");
-    $("jobHistory")?.removeAttribute("hidden");
-    if ($("jobHistory")) $("jobHistory").style.removeProperty("display");
-    $("jobHistory")?.scrollIntoView({ behavior: "smooth", block: "start" });
-  } else if (tab === "cash") {
-    const jobsPanel = $("providerJobs");
-    if (jobsPanel) {
-      jobsPanel.hidden = false;
-      jobsPanel.removeAttribute("hidden");
-      jobsPanel.classList.remove("hidden");
-      jobsPanel.style.removeProperty("display");
-    }
-    $("providerWalletPanel")?.classList.remove("hidden");
-    $("providerWalletPanel")?.removeAttribute("hidden");
-    $("providerAvailableJobs")?.classList.add("hidden");
-    $("providerJobs")?.scrollIntoView({ behavior: "smooth", block: "start" });
-  } else if (tab === "profile") {
-    const profilePanel = $("provider");
-    if (profilePanel) {
-      profilePanel.hidden = false;
-      profilePanel.removeAttribute("hidden");
-      profilePanel.classList.remove("hidden");
-      profilePanel.style.removeProperty("display");
-    }
-    $("provider")?.scrollIntoView({ behavior: "smooth", block: "start" });
-  } else {
-    dashboard?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-  dashboard?.querySelectorAll("[data-provider-tab]").forEach((button) => button.classList.toggle("active", button.dataset.providerTab === tab));
+
+  const show = (id) => {
+    const panel = $(id);
+    if (!panel) return;
+    panel.hidden = false;
+    panel.removeAttribute("hidden");
+    panel.classList.remove("hidden");
+    panel.style.removeProperty("display");
+    panel.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  if (tab === "available") show("providerAvailableJobs");
+  else if (tab === "myjobs") show("jobHistory");
+  else if (tab === "cash") show("providerWalletPanel");
+  else if (tab === "profile") show("provider");
+  else dashboard?.scrollIntoView({ behavior: "smooth", block: "start" });
+
+  dashboard?.querySelectorAll("[data-provider-tab]").forEach((button) =>
+    button.classList.toggle("active", button.dataset.providerTab === tab)
+  );
 }
 document.addEventListener("click", (event) => {
   const button = event.target.closest("[data-provider-tab]");
