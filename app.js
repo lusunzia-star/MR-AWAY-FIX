@@ -2636,20 +2636,18 @@ async function loadProviderReviews() {
 function setCustomerTab(tab) {
   const dashboard = $("customerDashboard");
   [$("services"), $("requestBox"), $("customerRequestsPanel"), $("jobHistory"), $("notifications")].forEach((panel) => panel?.classList.add("hidden"));
-  if (tab === "home") dashboard?.classList.remove("hidden");
+  dashboard?.classList.remove("hidden");
+  dashboard?.querySelector(".customer-home-content")?.classList.toggle("hidden", tab !== "home");
   if (tab === "post") {
-    dashboard?.classList.add("hidden");
     $("services")?.classList.remove("hidden");
     $("services")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
   if (tab === "jobs") {
-    dashboard?.classList.add("hidden");
     $("customerRequestsPanel")?.classList.remove("hidden");
     $("jobHistory")?.classList.remove("hidden");
     $("customerRequestsPanel")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
   if (tab === "updates") {
-    dashboard?.classList.add("hidden");
     $("customerRequestsPanel")?.classList.remove("hidden");
     $("notifications")?.classList.remove("hidden");
     $("customerRequestsPanel")?.scrollIntoView({ behavior: "smooth", block: "start" });
