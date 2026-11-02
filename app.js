@@ -2673,7 +2673,10 @@ async function refreshAllScreens() {
 
   ensureCustomerPaymentUI();
 
-  if (profile?.role === "customer") {
+  const accountRole = String(profile?.role || "").trim().toLowerCase().replace(/[ -]+/g, "_");
+  console.log("MR AWAY FIX account role:", accountRole);
+
+  if (accountRole === "customer") {
     customerInfo?.classList.remove("hidden");
     providerInfo?.classList.add("hidden");
     customerPanel?.classList.remove("hidden");
@@ -2691,7 +2694,7 @@ async function refreshAllScreens() {
     return;
   }
 
-  if (profile?.role === "provider") {
+  if (["provider", "service_provider"].includes(accountRole)) {
     customerInfo?.classList.add("hidden");
     providerInfo?.classList.remove("hidden");
     customerPanel?.classList.add("hidden");
