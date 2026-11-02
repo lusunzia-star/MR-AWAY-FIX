@@ -216,7 +216,8 @@ async function handleAuthSubmit() {
     if ($("providerArea") && meta.service_area) $("providerArea").value = meta.service_area;
     if ($("providerPhone") && meta.phone) $("providerPhone").value = meta.phone;
     $("provider")?.classList.remove("hidden");
-    if ($("provider")) $("provider").style.display = "block";
+    $("provider")?.removeAttribute("hidden");
+    if ($("provider")) $("provider").style.removeProperty("display");
     $("provider")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 }
@@ -2670,7 +2671,7 @@ document.addEventListener("click", (event) => {
 function setProviderTab(tab) {
   const dashboard = $("providerDashboard");
   const panels = [$("provider"), $("providerJobs"), $("jobHistory"), $("notifications")];
-  panels.forEach((panel) => { if (panel) { panel.classList.add("hidden"); panel.style.display = "none"; } });
+  panels.forEach((panel) => { if (panel) { panel.classList.add("hidden"); panel.setAttribute("hidden", ""); panel.style.setProperty("display", "none", "important"); } });
   dashboard?.classList.remove("hidden");
   $("providerWalletPanel")?.classList.add("hidden");
   $("providerAvailableJobs")?.classList.add("hidden");
@@ -2679,12 +2680,14 @@ function setProviderTab(tab) {
   dashboard?.querySelector(".provider-home-tip")?.classList.toggle("hidden", tab !== "home");
   if (tab === "available") {
     $("providerJobs")?.classList.remove("hidden");
-    if ($("providerJobs")) $("providerJobs").style.display = "block";
+    $("providerJobs")?.removeAttribute("hidden");
+    if ($("providerJobs")) $("providerJobs").style.removeProperty("display");
     $("providerAvailableJobs")?.classList.remove("hidden");
     $("providerJobs")?.scrollIntoView({ behavior: "smooth", block: "start" });
   } else if (tab === "myjobs") {
     $("jobHistory")?.classList.remove("hidden");
-    if ($("jobHistory")) $("jobHistory").style.display = "block";
+    $("jobHistory")?.removeAttribute("hidden");
+    if ($("jobHistory")) $("jobHistory").style.removeProperty("display");
     $("jobHistory")?.scrollIntoView({ behavior: "smooth", block: "start" });
   } else if (tab === "cash") {
     $("providerJobs")?.classList.remove("hidden");
