@@ -2440,9 +2440,9 @@ function setCustomerTab(tab) {
     $("customerRequestsPanel")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
   if (tab === "updates") {
-    $("customerRequestsPanel")?.classList.remove("hidden");
+    // Updates is a separate screen: show notifications/provider updates only.
     $("notifications")?.classList.remove("hidden");
-    $("customerRequestsPanel")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    $("notifications")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
   if (tab === "account") $("loginBtn")?.click();
   dashboard?.querySelectorAll("[data-customer-tab]").forEach((button) => button.classList.toggle("active", button.dataset.customerTab === tab));
