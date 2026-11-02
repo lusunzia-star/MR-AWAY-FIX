@@ -2722,7 +2722,7 @@ async function refreshAllScreens() {
     document.querySelectorAll(".public-section").forEach((section) => section.classList.remove("hidden"));
     document.querySelector(".site-nav")?.classList.remove("hidden");
     customerInfo?.classList.remove("hidden");
-    providerInfo?.classList.remove("hidden");
+    providerInfo?.classList.add("hidden");
     customerPanel?.classList.add("hidden");
     customerResponses?.classList.add("hidden");
     services?.classList.add("hidden");
@@ -2787,8 +2787,9 @@ async function refreshAllScreens() {
     customerPanel?.classList.add("hidden");
     customerResponses?.classList.add("hidden");
     services?.classList.add("hidden");
-    provider?.classList.remove("hidden");
-    providerJobs?.classList.remove("hidden");
+    provider?.classList.add("hidden");
+    providerJobs?.classList.add("hidden");
+    $("notifications")?.classList.add("hidden");
     $("providerProfiles")?.classList.add("hidden");
     ensureProviderPhoneInput();
 
@@ -2798,6 +2799,11 @@ async function refreshAllScreens() {
       loadNotifications(),
       loadProviderReviews(),
     ]);
+    $("provider")?.classList.add("hidden");
+    $("providerJobs")?.classList.add("hidden");
+    $("jobHistory")?.classList.add("hidden");
+    $("notifications")?.classList.add("hidden");
+    setProviderTab("home");
     return;
   }
 
