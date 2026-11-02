@@ -2429,7 +2429,7 @@ async function loadJobHistory() {
     })),
   ];
 
-  box.classList.remove("hidden");
+  // The selected dashboard tab controls when job history is shown.
 
   if (!all.length) {
     list.innerHTML =
