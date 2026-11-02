@@ -2729,6 +2729,9 @@ async function refreshAllScreens() {
       loadNotifications(),
       loadProviderReviews(),
     ]);
+    customerPanel?.classList.add("hidden");
+    $("jobHistory")?.classList.add("hidden");
+    $("notifications")?.classList.add("hidden");
     return;
   }
 
