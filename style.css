@@ -560,3 +560,14 @@ footer {
 .provider-bottom-nav button span{font-size:22px;line-height:1.1}.provider-bottom-nav button.active{color:#facc15}
 @media(min-width:700px){.provider-dashboard{padding:30px 30px 96px}.provider-shortcuts{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:380px){.provider-dashboard{width:calc(100% - 16px);padding-left:12px;padding-right:12px}.provider-bottom-nav button{font-size:10px}}
+
+/* Provider dashboard separation and mobile polish */
+.provider-screen-panel{width:100%;max-width:100%;box-sizing:border-box;margin:16px auto 110px;padding:0 0 18px;scroll-margin-top:90px}
+.provider-screen-panel h2{margin:8px 0 16px;font-size:clamp(24px,5vw,30px);line-height:1.2;color:#111827}
+.provider-screen-panel .card{box-sizing:border-box;width:100%;max-width:100%;margin:0 0 14px;padding:20px 16px;border:1px solid #e2e8f0;border-radius:18px;background:#fff;box-shadow:0 4px 16px rgba(15,23,42,.05)}
+.provider-dashboard button.provider-primary-action{background:#facc15!important;color:#111827!important;border:0!important}
+.provider-dashboard button.provider-shortcut{background:#fff!important;color:#111827!important;border:1px solid #dbe3ed!important}
+.provider-bottom-nav{grid-template-columns:repeat(5,minmax(0,1fr));box-sizing:border-box}
+.provider-bottom-nav button{min-width:0;white-space:nowrap;line-height:1.2}
+.provider-dashboard{padding-bottom:112px;margin-bottom:16px}
+@media(max-width:380px){.provider-bottom-nav button{font-size:10px;padding-left:0;padding-right:0}.provider-bottom-nav button span{font-size:20px}}
