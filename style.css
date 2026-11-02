@@ -574,3 +574,66 @@ footer {
 
 /* Customer inner tabs: collapse the empty dashboard shell above the active section. */
 .customer-dashboard.customer-tab-away{width:100%;max-width:760px;margin:0 auto;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none;}
+
+
+/* ======================================================
+   MR AWAY FIX — MODERN VISUAL FINISH
+   Visual-only styling; keeps existing IDs and workflows.
+   ====================================================== */
+:root{color-scheme:light;--maf-ink:#111827;--maf-muted:#64748b;--maf-line:#e2e8f0;--maf-paper:#fff;--maf-bg:#f3f6fb;--maf-yellow:#facc15;--maf-blue:#17243b}
+html{scroll-padding-top:86px}
+body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Arial,sans-serif;background:linear-gradient(180deg,#eef2f8 0%,#f8fafc 44%,#f3f6fb 100%);color:var(--maf-ink);-webkit-font-smoothing:antialiased}
+header,.topbar{min-height:72px;padding:13px clamp(16px,4vw,34px);background:rgba(17,24,39,.98);box-shadow:0 5px 20px rgba(15,23,42,.12);backdrop-filter:blur(12px)}
+.brand{font-size:clamp(17px,2.4vw,21px);letter-spacing:1.4px}
+header #loginBtn{min-width:112px;border-radius:14px;padding:12px 18px;background:#fff;color:var(--maf-ink);border:1px solid #dbe3ed}
+main{overflow:clip}
+.site-nav{position:sticky;top:72px;z-index:80;background:rgba(255,255,255,.94)!important;border-bottom:1px solid var(--maf-line)!important;box-shadow:0 3px 12px rgba(15,23,42,.04);backdrop-filter:blur(12px)}
+.site-nav a{border-radius:999px!important;padding:9px 14px!important;font-size:13px;transition:background .18s,color .18s}
+.site-nav a:hover{background:#fff7cc!important;color:#111827}
+.hero{max-width:1040px;margin:24px auto 18px;padding:clamp(38px,7vw,76px) clamp(20px,5vw,56px);border:1px solid #e5eaf1;border-radius:28px;background:radial-gradient(circle at 85% 12%,rgba(250,204,21,.22),transparent 32%),linear-gradient(135deg,#fff 0%,#f8fafc 70%,#fff9df 100%);box-shadow:0 16px 42px rgba(15,23,42,.07)}
+.hero > p:first-child,.tag{color:#8a6500}
+.hero h1{font-size:clamp(36px,7vw,58px);letter-spacing:-1.8px;color:var(--maf-ink)}
+.hero h2{font-size:clamp(21px,3.4vw,29px);color:#334155}
+.hero p{color:#475569}
+.hero-buttons button,.actions button{min-height:50px;border-radius:14px;padding:14px 22px}
+.hero-buttons button:first-child,.primary{background:var(--maf-ink);color:#fff;box-shadow:0 6px 16px rgba(17,24,39,.15)}
+.hero-buttons .outline{background:#fff;border:1px solid #cbd5e1;color:var(--maf-ink)}
+.card{border:1px solid #e5eaf1;border-radius:22px;box-shadow:0 8px 26px rgba(15,23,42,.055);padding:clamp(20px,3.5vw,30px)}
+.card h2{font-size:clamp(23px,4vw,30px);letter-spacing:-.5px;line-height:1.2;color:var(--maf-ink)}
+.card h3{color:#1e293b}
+.public-section{scroll-margin-top:95px}
+.service-list{gap:12px}
+.service-item{border:1px solid #e4eaf2;border-radius:15px;background:linear-gradient(180deg,#fff,#f8fafc);padding:17px 12px;box-shadow:0 3px 10px rgba(15,23,42,.035)}
+.audience-box,.trust-box{border:1px solid #e4eaf2;border-radius:17px;background:linear-gradient(180deg,#fff,#f8fafc);box-shadow:0 3px 12px rgba(15,23,42,.035)}
+.audience-box{padding:22px}
+.trust-box{padding:20px}
+.launch-box{border:1px solid #f1d56a!important;border-radius:20px!important;background:linear-gradient(135deg,#fff9df,#fff)!important;box-shadow:0 8px 22px rgba(161,98,7,.08)}
+button{border-radius:13px;letter-spacing:.05px}
+button:focus-visible,a:focus-visible{outline:3px solid rgba(250,204,21,.75);outline-offset:3px}
+input,textarea,select{border:1px solid #d5deea;border-radius:13px;padding:14px 15px;background:#fff;transition:border-color .18s,box-shadow .18s}
+input:focus,textarea:focus,select:focus{border-color:#d2a900;box-shadow:0 0 0 4px rgba(250,204,21,.16)}
+label{color:#263449;font-size:14px}
+.whatsapp-link{border-radius:999px;box-shadow:0 5px 14px rgba(18,140,126,.18)}
+.provider-card,#historyList .card,#jobsList .card,#notificationsList .card{border:1px solid #e5eaf1;border-radius:17px;box-shadow:0 5px 18px rgba(15,23,42,.05);padding:20px}
+#notificationsList .card{background:linear-gradient(135deg,#fff,#f8fafc)}
+footer{padding:38px 20px 120px;color:#64748b}
+.customer-dashboard,.provider-dashboard{border:1px solid #e1e8f0;box-shadow:0 12px 34px rgba(15,23,42,.065)}
+.customer-welcome h1,.provider-welcome h1{letter-spacing:-.8px}
+.customer-shortcut,.provider-shortcut{transition:transform .18s,box-shadow .18s,border-color .18s}
+.customer-shortcut:hover,.provider-shortcut:hover{transform:translateY(-2px);border-color:#f0cf45!important;box-shadow:0 8px 18px rgba(15,23,42,.07)}
+.customer-post-cta,.provider-primary-action{background:linear-gradient(110deg,#facc15,#ffdf55)!important;box-shadow:0 8px 20px rgba(202,158,0,.16)}
+.customer-bottom-nav,.provider-bottom-nav{border-top:1px solid rgba(255,255,255,.1);box-shadow:0 -8px 24px rgba(15,23,42,.18);backdrop-filter:blur(14px)}
+.customer-bottom-nav button,.provider-bottom-nav button{transition:color .18s,background .18s}
+.customer-bottom-nav button.active,.provider-bottom-nav button.active{color:var(--maf-yellow)}
+.step-list li{padding-left:4px;color:#475569}
+.small-note{color:#64748b}
+@media(max-width:600px){
+ header,.topbar{min-height:64px}
+ .site-nav{top:64px;justify-content:flex-start;flex-wrap:nowrap;overflow-x:auto;white-space:nowrap}
+ .hero{width:calc(100% - 20px);margin:14px auto;padding:34px 20px;border-radius:22px}
+ .card{margin:13px auto;padding:20px;border-radius:18px}
+ .service-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .audience-grid{grid-template-columns:1fr}
+ footer{padding-bottom:130px}
+}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{transition:none!important;animation:none!important}}
