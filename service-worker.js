@@ -1,4 +1,4 @@
-const CACHE_NAME = "mr-away-fix-v1";
+const CACHE_NAME = "mr-away-fix-v2";
 
 const APP_FILES = [
   "./",
