@@ -571,3 +571,6 @@ footer {
 .provider-bottom-nav button{min-width:0;white-space:nowrap;line-height:1.2}
 .provider-dashboard{padding-bottom:112px;margin-bottom:16px}
 @media(max-width:380px){.provider-bottom-nav button{font-size:10px;padding-left:0;padding-right:0}.provider-bottom-nav button span{font-size:20px}}
+
+/* Customer inner tabs: collapse the empty dashboard shell above the active section. */
+.customer-dashboard.customer-tab-away{width:100%;max-width:760px;margin:0 auto;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none;}
