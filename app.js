@@ -2681,10 +2681,8 @@ function setProviderTab(tab) {
     $("providerAvailableJobs")?.classList.remove("hidden");
     $("providerJobs")?.scrollIntoView({ behavior: "smooth", block: "start" });
   } else if (tab === "myjobs") {
-    $("providerJobs")?.classList.remove("hidden");
-    $("providerAvailableJobs")?.classList.remove("hidden");
     $("jobHistory")?.classList.remove("hidden");
-    $("providerJobs")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    $("jobHistory")?.scrollIntoView({ behavior: "smooth", block: "start" });
   } else if (tab === "cash") {
     $("providerJobs")?.classList.remove("hidden");
     $("providerWalletPanel")?.classList.remove("hidden");
