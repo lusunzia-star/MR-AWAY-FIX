@@ -2783,7 +2783,7 @@ async function refreshAllScreens() {
     document.querySelectorAll(".public-section").forEach((section) => section.classList.add("hidden"));
     document.querySelector(".site-nav")?.classList.add("hidden");
     customerInfo?.classList.add("hidden");
-    providerInfo?.classList.remove("hidden");
+    providerInfo?.classList.add("hidden");
     customerPanel?.classList.add("hidden");
     customerResponses?.classList.add("hidden");
     services?.classList.add("hidden");
