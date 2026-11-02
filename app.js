@@ -2711,11 +2711,25 @@ function setProviderTab(tab) {
     if ($("jobHistory")) $("jobHistory").style.removeProperty("display");
     $("jobHistory")?.scrollIntoView({ behavior: "smooth", block: "start" });
   } else if (tab === "cash") {
-    $("providerJobs")?.classList.remove("hidden");
+    const jobsPanel = $("providerJobs");
+    if (jobsPanel) {
+      jobsPanel.hidden = false;
+      jobsPanel.removeAttribute("hidden");
+      jobsPanel.classList.remove("hidden");
+      jobsPanel.style.removeProperty("display");
+    }
     $("providerWalletPanel")?.classList.remove("hidden");
+    $("providerWalletPanel")?.removeAttribute("hidden");
+    $("providerAvailableJobs")?.classList.add("hidden");
     $("providerJobs")?.scrollIntoView({ behavior: "smooth", block: "start" });
   } else if (tab === "profile") {
-    $("provider")?.classList.remove("hidden");
+    const profilePanel = $("provider");
+    if (profilePanel) {
+      profilePanel.hidden = false;
+      profilePanel.removeAttribute("hidden");
+      profilePanel.classList.remove("hidden");
+      profilePanel.style.removeProperty("display");
+    }
     $("provider")?.scrollIntoView({ behavior: "smooth", block: "start" });
   } else {
     dashboard?.scrollIntoView({ behavior: "smooth", block: "start" });
