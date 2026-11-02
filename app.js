@@ -2429,6 +2429,7 @@ function setCustomerTab(tab) {
   const dashboard = $("customerDashboard");
   [$("services"), $("requestBox"), $("customerRequestsPanel"), $("jobHistory"), $("notifications")].forEach((panel) => panel?.classList.add("hidden"));
   dashboard?.classList.remove("hidden");
+  dashboard?.classList.toggle("customer-tab-away", tab !== "home");
   dashboard?.querySelector(".customer-home-content")?.classList.toggle("hidden", tab !== "home");
   if (tab === "post") {
     $("services")?.classList.remove("hidden");
