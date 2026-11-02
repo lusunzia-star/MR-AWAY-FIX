@@ -2660,6 +2660,38 @@ document.addEventListener("click", (event) => {
   if (button) setCustomerTab(button.dataset.customerTab);
 });
 
+/* PROVIDER DASHBOARD NAVIGATION */
+function setProviderTab(tab) {
+  const dashboard = $("providerDashboard");
+  const panels = [$("provider"), $("providerJobs"), $("jobHistory"), $("notifications")];
+  panels.forEach((panel) => panel?.classList.add("hidden"));
+  dashboard?.classList.remove("hidden");
+  dashboard?.querySelector(".provider-welcome")?.classList.toggle("hidden", tab !== "home");
+  dashboard?.querySelector(".provider-shortcuts")?.classList.toggle("hidden", tab !== "home");
+  dashboard?.querySelector(".provider-home-tip")?.classList.toggle("hidden", tab !== "home");
+  if (tab === "available") {
+    $("providerJobs")?.classList.remove("hidden");
+    $("providerJobs")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  } else if (tab === "myjobs") {
+    $("providerJobs")?.classList.remove("hidden");
+    $("jobHistory")?.classList.remove("hidden");
+    $("providerJobs")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  } else if (tab === "cash") {
+    $("providerJobs")?.classList.remove("hidden");
+    $("providerJobs")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  } else if (tab === "profile") {
+    $("provider")?.classList.remove("hidden");
+    $("provider")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  } else {
+    dashboard?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+  dashboard?.querySelectorAll("[data-provider-tab]").forEach((button) => button.classList.toggle("active", button.dataset.providerTab === tab));
+}
+document.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-provider-tab]");
+  if (button) setProviderTab(button.dataset.providerTab);
+});
+
 /* =========================================================
    REFRESH
    ========================================================= */
@@ -2675,6 +2707,7 @@ async function refreshAllScreens() {
   const providerInfo = $("providers");
 
   if (!user) {
+    $("providerDashboard")?.classList.add("hidden");
     $("customerDashboard")?.classList.add("hidden");
     document.querySelectorAll(".public-section").forEach((section) => section.classList.remove("hidden"));
     document.querySelector(".site-nav")?.classList.remove("hidden");
@@ -2708,6 +2741,7 @@ async function refreshAllScreens() {
   console.log("MR AWAY FIX account role:", accountRole);
 
   if (accountRole === "customer") {
+    $("providerDashboard")?.classList.add("hidden");
     $("customerDashboard")?.classList.remove("hidden");
     document.querySelectorAll(".public-section").forEach((section) => section.classList.add("hidden"));
     document.querySelector(".site-nav")?.classList.add("hidden");
@@ -2734,6 +2768,7 @@ async function refreshAllScreens() {
   }
 
   if (["provider", "service_provider"].includes(accountRole)) {
+    $("providerDashboard")?.classList.remove("hidden");
     $("customerDashboard")?.classList.add("hidden");
     document.querySelectorAll(".public-section").forEach((section) => section.classList.remove("hidden"));
     document.querySelector(".site-nav")?.classList.remove("hidden");
