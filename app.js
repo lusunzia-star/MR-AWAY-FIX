@@ -1592,15 +1592,31 @@ function bindProviderButtons(user) {
 
 async function loadCustomerDashboard() {
   const customerResponses = $("customerResponses");
+  const customerPanel = $("customerRequestsPanel");
 
   if (!customerResponses) return;
 
   const user = await currentUser();
 
   if (!user) {
+    customerPanel?.classList.add("hidden");
     customerResponses.classList.add("hidden");
     return;
   }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (profile?.role !== "customer") {
+    customerPanel?.classList.add("hidden");
+    customerResponses.classList.add("hidden");
+    return;
+  }
+
+  customerPanel?.classList.remove("hidden");
 
   const { data: jobs, error } = await supabase
     .from("service_requests")
@@ -2625,24 +2641,70 @@ async function refreshAllScreens() {
 
   await updateAccountButton(user);
 
-  if (!user) return;
+  const customerPanel = $("customerRequestsPanel");
+  const customerResponses = $("customerResponses");
+
+  if (!user) {
+    customerPanel?.classList.add("hidden");
+    customerResponses?.classList.add("hidden");
+    services?.classList.add("hidden");
+    provider?.classList.add("hidden");
+    providerJobs?.classList.add("hidden");
+    $("providerProfiles")?.classList.add("hidden");
+    $("jobHistory")?.classList.add("hidden");
+    $("notifications")?.classList.add("hidden");
+    return;
+  }
+
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (profileError) {
+    console.error("Could not determine account role:", profileError);
+    return;
+  }
 
   ensureCustomerPaymentUI();
 
-  await Promise.allSettled([
-    loadCustomerDashboard(),
-    loadProviderProfiles(),
-    loadJobHistory(),
-    loadNotifications(),
-    loadProviderReviews(),
-  ]);
+  if (profile?.role === "customer") {
+    customerPanel?.classList.remove("hidden");
+    services?.classList.add("hidden");
+    provider?.classList.add("hidden");
+    providerJobs?.classList.add("hidden");
+    $("providerProfiles")?.classList.add("hidden");
 
-  if (
-    provider &&
-    !provider.classList.contains("hidden")
-  ) {
-    await loadProviderDashboard();
+    await Promise.allSettled([
+      loadCustomerDashboard(),
+      loadJobHistory(),
+      loadNotifications(),
+      loadProviderReviews(),
+    ]);
+    return;
   }
+
+  if (profile?.role === "provider") {
+    customerPanel?.classList.add("hidden");
+    customerResponses?.classList.add("hidden");
+    services?.classList.add("hidden");
+    provider?.classList.remove("hidden");
+    providerJobs?.classList.remove("hidden");
+    $("providerProfiles")?.classList.add("hidden");
+    ensureProviderPhoneInput();
+
+    await Promise.allSettled([
+      loadProviderDashboard(),
+      loadJobHistory(),
+      loadNotifications(),
+      loadProviderReviews(),
+    ]);
+    return;
+  }
+
+  customerPanel?.classList.add("hidden");
+  providerJobs?.classList.add("hidden");
 }
 
 /* =========================================================
